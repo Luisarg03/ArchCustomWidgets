@@ -42,6 +42,7 @@ export ACW_NOTES_FILE="$NOTES_FILE" ACW_STATE_FILE="$STATE_FILE" \
        ACW_OFFSET="$OFFSET" ACW_MODEL="$MODEL" ACW_RETRY="$RETRY"
 
 python3 - <<'PY'
+import datetime
 import json
 import os
 import subprocess
@@ -55,16 +56,52 @@ OFFSET = int(os.environ["ACW_OFFSET"])
 RETRY = os.environ["ACW_RETRY"] == "1"
 
 VALID_TYPES = {"task", "idea", "thought"}
+VALID_PRIORITIES = {"low", "medium", "high"}
 PROMPT = (
     'Classify the following note for a personal task manager. Reply with ONLY '
-    'a JSON object with exactly two fields: "title" (short title, max 8 words) '
-    'and "type" (one of: task, idea, thought). No markdown, no explanation, no '
-    'extra text. Raw note: '
+    'a JSON object with exactly these fields: "title" (short title, max 8 words), '
+    '"type" (one of: task, idea, thought), "priority" (one of: low, medium, high), '
+    '"tags" (array of 2-4 short lowercase keywords), "due" (ISO-8601 date YYYY-MM-DD '
+    'or null — only if the note implies a deadline or time constraint, otherwise null). '
+    'Definitions: task = something to do or fix; idea = a possibility, question, or '
+    'spontaneous thought to explore later; thought = a general observation or note with '
+    'no action implied. Examples: "comprar leche y pan" -> {"title": "Buy milk and bread", '
+    '"type": "task", "priority": "medium", "tags": ["shopping"], "due": null}; '
+    '"llamar al dentista manana" -> {"title": "Call dentist", "type": "task", '
+    '"priority": "high", "tags": ["health"], "due": "2026-08-15"}; '
+    '"que pasaria si migramos a postgres" -> {"title": "Consider migrating to postgres", '
+    '"type": "idea", "priority": "low", "tags": ["database"], "due": null}. '
+    'No markdown, no explanation, no extra text. Raw note: '
 )
 
 
+def clean_tags(tags):
+    """Normalize to a deduped list of up to 4 short lowercase strings; [] on junk."""
+    if not isinstance(tags, list):
+        return []
+    cleaned = []
+    for t in tags:
+        if isinstance(t, str):
+            t = t.strip().lower()
+            if t and t not in cleaned:
+                cleaned.append(t)
+    return cleaned[:4]
+
+
+def clean_due(due):
+    """Return the due date as YYYY-MM-DD if valid, else None."""
+    if not isinstance(due, str):
+        return None
+    due = due.strip()
+    try:
+        datetime.date.fromisoformat(due)
+    except ValueError:
+        return None
+    return due
+
+
 def classify(raw):
-    """Run the LLM. Returns (title, type) on success, (None, error_msg) on any failure."""
+    """Run the LLM. Returns (fields dict, None) on success, (None, error_msg) on failure."""
     try:
         proc = subprocess.run(
             ["opencode", "run", "-m", MODEL, PROMPT + raw],
@@ -100,7 +137,18 @@ def classify(raw):
     words = title.strip().split()
     if len(words) > 8:
         title = " ".join(words[:8])
-    return title, ntype
+    # priority/tags/due are tolerated: bad values fall back to defaults, not errors.
+    priority = obj.get("priority", "medium")
+    if priority not in VALID_PRIORITIES:
+        priority = "medium"
+    fields = {
+        "title": title,
+        "type": ntype,
+        "priority": priority,
+        "tags": clean_tags(obj.get("tags")),
+        "due": clean_due(obj.get("due")),
+    }
+    return fields, None
 
 
 def main():
@@ -131,15 +179,14 @@ def main():
         if rec.get("title") and rec.get("type") in VALID_TYPES and not rec.get("error"):
             new_offset = i + 1  # already enriched; skip without an LLM call
             continue
-        title, ntype = classify(rec.get("raw", ""))
-        if title is not None:
-            rec["title"] = title
-            rec["type"] = ntype
+        fields, err = classify(rec.get("raw", ""))
+        if fields is not None:
+            rec.update(fields)
             rec["error"] = None
-            print("processed %s: %s (%s)" % (rec.get("id", "?"), title, ntype))
+            print("processed %s: %s (%s)" % (rec.get("id", "?"), fields["title"], fields["type"]))
         else:
-            rec["error"] = ntype
-            print("failed %s: %s" % (rec.get("id", "?"), ntype))
+            rec["error"] = err
+            print("failed %s: %s" % (rec.get("id", "?"), err))
         lines[i] = json.dumps(rec, ensure_ascii=False)
         new_offset = i + 1
         changed = True

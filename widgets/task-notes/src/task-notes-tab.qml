@@ -1,12 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
-import Qt.labs.platform
 import Quickshell
 import Quickshell.Io
 import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
+import qs.utils
 
 // Dashboard tab listing notes from the shared JSONL store.
 // Pattern references:
@@ -17,8 +17,7 @@ import qs.services
 Item {
     id: root
 
-    readonly property string notesPath: trimFileProtocol(
-        StandardPaths.standardLocations(StandardPaths.StateLocation)[0] + "/caelestia/notes.jsonl")
+    readonly property string notesPath: Paths.state + "/notes.jsonl"
     property var notes: []
 
     // Cap tab height at ~400px; internal scroll handles many notes
@@ -36,6 +35,14 @@ Item {
         onLoaded: root.notes = parseNotes(text())
 
         onLoadFailed: root.notes = [] // missing file = empty list, not an error
+    }
+
+    // Fallback refresh: watchChanges may miss rapid writes from execDetached
+    Timer {
+        id: refreshTimer
+        interval: 300
+        repeat: false
+        onTriggered: notesFile.reload()
     }
 
     // Trim the file:// protocol prefix (same helper as the shell's FileUtils).
@@ -134,37 +141,62 @@ Item {
             spacing: Tokens.spacing.medium
 
             // Checkbox: click toggles the note status
-            Rectangle {
-                readonly property bool done: row.modelData.status === "done"
+            Item {
+                width: 32
+                height: 32
 
-                width: 18
-                height: 18
-                radius: 4
-                color: done ? Colours.palette.m3primary : "transparent"
-                border.color: done ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
-                border.width: 1
+                Rectangle {
+                    readonly property bool done: row.modelData.status === "done"
+                    readonly property bool hovered: checkMouse.containsMouse
 
-                MaterialIcon {
-                    visible: parent.done
                     anchors.centerIn: parent
-                    text: "check"
-                    fontStyle: Tokens.font.icon.small
-                    color: Colours.palette.m3onSurface
+                    width: 20
+                    height: 20
+                    radius: 5
+                    color: done
+                        ? Colours.palette.m3primary
+                        : (hovered ? Qt.rgba(Colours.palette.m3primary.r, Colours.palette.m3primary.g, Colours.palette.m3primary.b, 0.12) : "transparent")
+                    border.color: done
+                        ? Colours.palette.m3primary
+                        : (hovered ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+                    border.width: done ? 0 : 1.5
+
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                    MaterialIcon {
+                        visible: parent.done
+                        anchors.centerIn: parent
+                        text: "check"
+                        fontStyle: Tokens.font.icon.small
+                        color: Colours.palette.m3onSurface
+                    }
                 }
 
                 MouseArea {
+                    id: checkMouse
                     anchors.fill: parent
-                    onClicked: Quickshell.execDetached([
-                        trimFileProtocol(Qt.resolvedUrl("toggle_note.sh")),
-                        row.modelData.id
-                    ])
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        // ponytail: absolute path — Qt.resolvedUrl resolves relative to QML file,
+                        // but installed QML lives in a different dir than the script.
+                        Quickshell.execDetached([
+                            Paths.home + "/.config/acw/task-notes/src/toggle_note.sh",
+                            row.modelData.id
+                        ]);
+                        refreshTimer.start();
+                    }
                 }
             }
 
-            StyledText {
+            Text {
                 Layout.fillWidth: true
                 text: row.modelData.title
-                font: Tokens.font.body.medium
+                font.family: Tokens.font.body.medium.family
+                font.pixelSize: Tokens.font.body.medium.pixelSize
+                font.weight: Tokens.font.body.medium.weight
+                font.strikeout: row.modelData.status === "done"
                 color: Colours.palette.m3onSurface
                 elide: Text.ElideRight
             }
