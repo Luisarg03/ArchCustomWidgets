@@ -1,8 +1,0 @@
-{
-  "id": "waybar-todo",
-  "type": "widget",
-  "description": "Waybar module: top pending task with tooltip list; double-click done, right-click TUI manager, middle-click action",
-  "stack": "bash",
-  "entrypoint": "src/todo.sh",
-  "deps": []
-}

@@ -1,8 +1,0 @@
-{
-  "id": "opencode-stats",
-  "type": "service",
-  "description": "Fetch opencode usage stats into ~/.local/share/caelestia/opencode_stats.json for the shell widget; 5-min timer",
-  "stack": "python3",
-  "entrypoint": "src/fetch_opencode_stats.py",
-  "deps": ["python3"]
-}

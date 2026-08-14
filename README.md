@@ -25,14 +25,11 @@ cd <unit>
 |---|---|---|---|
 | `wallpaper` | service | Wallhaven downloader + rofi wallpaper selector + auto-theme pipeline (systemd `.path` → matugen + scheme set) | Keybinds `Ctrl+Super+T`, `Shift+Super+T`, `Ctrl+Shift+T` — wire manually |
 | `scheme-rotator` | widget | Rotates the active color scheme | Keybind `Super+Alt+T` — wire manually |
-| `waybar-todo` | widget | Todo list module for waybar | |
-| `waybar-countdown` | widget | Countdown timer module for waybar | |
 | `waybar-power` | widget | Power menu module: lock / power / quit / reboot | |
 | `waybar-theme` | widget | Theme switcher module for waybar | |
 | `clipboard-rofi` | widget | Rofi clipboard manager | Keybind `Super+V` — wire manually |
 | `vpn-surfshark` | service | Surfshark VPN quick-toggle (Caelestia quick-toggles `utilities.vpn`), `surfshark-connect`/`surfshark-disconnect` units | System-level files → sudo install |
 | `quickshell-watchdog` | service | Watchdog for quickshell, systemd user unit + timer | |
-| `opencode-stats` | service | opencode usage stats collector, systemd user unit + timer | |
 
 ## Contract
 

@@ -1,7 +1,0 @@
-[Unit]
-Description=Fetch opencode usage stats for the Caelestia shell widget
-
-[Service]
-Type=oneshot
-ExecStartPre=/usr/bin/mkdir -p $HOME/.local/share/caelestia
-ExecStart=/usr/bin/python3 $HOME/.config/acw/opencode-stats/src/fetch_opencode_stats.py > $HOME/.local/share/caelestia/opencode_stats.json
