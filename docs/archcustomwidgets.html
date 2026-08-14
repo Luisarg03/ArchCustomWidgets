@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArchCustomWidgets — Factory Technical Reference</title>
+<style>
+  :root {
+    /* Primary palette */
+    --primary: #0033A1;
+    --primary-dark: #001D6E;
+    --accent: #00BB31;
+
+    /* Text */
+    --text: #16191F;
+    --text-secondary: #545B64;
+
+    /* Surfaces */
+    --bg: #FFFFFF;
+    --bg-light: #FAFAFA;
+    --border: #D5DBDB;
+
+    /* Code */
+    --code-bg: #001D6E;
+    --code-inline-bg: #F2F3F3;
+    --code-inline-text: #D14;
+
+    /* Table */
+    --table-header: #F2F3F3;
+
+    /* Callouts */
+    --note-bg: #EBF5FB;
+    --note-border: #0033A1;
+    --warning-bg: #FEF5E7;
+    --warning-border: #00BB31;
+    --important-bg: #FEF9E7;
+    --important-border: #0033A1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 60px;
+  }
+
+  /* Cover */
+  .cover-area {
+    margin: 0 -60px 48px -60px;
+    padding: 0 60px 40px 60px;
+    border-bottom: 3px solid var(--primary);
+    background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  }
+  .cover-top-bar {
+    background: var(--primary);
+    height: 6px;
+    margin: 0 -60px 32px -60px;
+    width: calc(100% + 120px);
+  }
+  .cover-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cover-brand .brand-logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.5px;
+  }
+  .cover-brand .brand-sep { color: var(--border); font-size: 18px; }
+  .cover-brand .brand-dept {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .cover-area h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+  .cover-area .subtitle {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+    font-weight: 400;
+  }
+  .cover-meta-box {
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 32px;
+    max-width: 640px;
+  }
+  .cover-meta-box .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .cover-meta-box dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cover-meta-box dd {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-left: 0;
+  }
+
+  /* Headings */
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+    margin: 40px 0 20px 0;
+    color: var(--text);
+  }
+  h3 { font-size: 18px; font-weight: 700; margin: 28px 0 14px 0; color: var(--text); }
+  h4 { font-size: 15px; font-weight: 700; margin: 20px 0 10px 0; color: var(--text); }
+
+  p { margin-bottom: 14px; }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Code */
+  code {
+    font-family: "SFMono-Regular", "Courier New", monospace;
+    font-size: 13px;
+    background: var(--code-inline-bg);
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: var(--code-inline-text);
+  }
+  pre {
+    font-family: "SFMono-Regular", "Courier New", monospace;
+    font-size: 14.5px;
+    line-height: 1.65;
+    background: var(--code-bg);
+    color: #ffffff;
+    padding: 18px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--table-header);
+    font-weight: 700;
+    padding: 10px 12px;
+    text-align: left;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody td {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(odd) td { background: var(--bg); }
+  tbody tr:nth-child(even) td { background: var(--bg-light); }
+
+  /* Callouts */
+  .callout {
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    border-left: 4px solid;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    page-break-inside: avoid;
+  }
+  .callout strong:first-child { display: block; font-size: 14px; margin-bottom: 4px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout code { background: rgba(0,0,0,0.07); }
+  .callout.note { background: var(--note-bg); border-color: var(--note-border); }
+  .callout.note strong:first-child { color: var(--primary); }
+  .callout.warning { background: var(--warning-bg); border-color: var(--warning-border); }
+  .callout.warning strong:first-child { color: #007A20; }
+  .callout.important { background: var(--important-bg); border-color: var(--important-border); }
+  .callout.important strong:first-child { color: var(--primary-dark); }
+
+  /* TOC */
+  .toc { margin-bottom: 32px; }
+  .toc ul { list-style: none; margin-left: 0; }
+  .toc > ul > li { margin-bottom: 4px; }
+  .toc > ul > li > a { font-weight: 600; }
+  .toc ul ul { margin-left: 20px; }
+  .toc ul ul li a { font-weight: 400; }
+
+  /* Diagram */
+  .diagram {
+    margin: 24px 0;
+    padding: 24px;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .diagram pre {
+    background: transparent;
+    color: var(--text);
+    padding: 0;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre;
+    word-break: normal;
+    overflow-x: auto;
+  }
+
+  /* Step list */
+  .step-list {
+    counter-reset: step;
+    list-style: none;
+    margin-left: 0;
+  }
+  .step-list li {
+    counter-increment: step;
+    margin-bottom: 12px;
+    padding-left: 36px;
+    position: relative;
+  }
+  .step-list li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-list li strong { display: block; }
+
+  /* Print */
+  @media print {
+    @page {
+      size: A4;
+      margin: 22mm 18mm 18mm 18mm;
+      @top-left { content: ""; border-bottom: 1px solid var(--primary); padding-bottom: 2mm; }
+      @top-right {
+        content: "ArchCustomWidgets — Factory Technical Reference";
+        font-size: 8.5px;
+        font-weight: 600;
+        color: var(--primary);
+        border-bottom: 1px solid var(--primary);
+        padding-bottom: 2mm;
+      }
+      @bottom-left { content: ""; border-top: 0.5px solid var(--border); padding-top: 2mm; }
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 8.5px;
+        color: var(--text-secondary);
+        border-top: 0.5px solid var(--border);
+        padding-top: 2mm;
+      }
+    }
+    @page :first {
+      margin-top: 15mm;
+      @top-left { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-left { content: none; border: none; }
+      @bottom-right { content: none; border: none; }
+    }
+    body { font-size: 11.5px; line-height: 1.55; max-width: 100%; padding: 0 !important; margin: 0; }
+    .cover-area { page-break-after: always; margin: 0 -18mm 0 -18mm; padding: 0 18mm 40px 18mm; }
+    .cover-top-bar { margin: 0 -18mm 24px -18mm; width: calc(100% + 36mm); }
+    pre, table, svg, .callout, .diagram, .toc { page-break-inside: avoid; }
+    h2, h3, h4 { page-break-after: avoid; }
+    p, li, dd { orphans: 3; widows: 3; }
+    a { color: var(--text); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       COVER PAGE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="cover-area">
+    <div class="cover-top-bar"></div>
+    <div class="cover-brand">
+      <span class="brand-logo">ArchCustomWidgets</span>
+      <span class="brand-sep">|</span>
+      <span class="brand-dept">Caelestia Hyprland Extensions</span>
+    </div>
+    <h1>Factory Technical Reference</h1>
+    <div class="subtitle">Architecture &middot; Unit Contract &middot; Install Model &middot; Validation</div>
+    <dl class="cover-meta-box">
+      <div class="meta-item"><dt>Repository</dt><dd>ArchCustomWidgets</dd></div>
+      <div class="meta-item"><dt>Platform</dt><dd>Arch Linux / Hyprland / Wayland</dd></div>
+      <div class="meta-item"><dt>Stack</dt><dd>bash + python3 helpers</dd></div>
+      <div class="meta-item"><dt>Version</dt><dd>1.0</dd></div>
+      <div class="meta-item"><dt>Date</dt><dd>2026-08-14</dd></div>
+    </dl>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       TABLE OF CONTENTS
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div class="toc">
+    <h2 style="border: none; margin-top: 0;">Table of Contents</h2>
+    <ul>
+      <li><a href="#introduction">1. Introduction</a></li>
+      <li><a href="#architecture">2. Architecture</a></li>
+      <li><a href="#unit-contract">3. Unit Contract</a></li>
+      <li><a href="#unit-catalog">4. Unit Catalog</a></li>
+      <li><a href="#install-model">5. Install Model</a></li>
+      <li><a href="#services-systemd">6. Services &amp; systemd</a></li>
+      <li><a href="#theming-contract">7. Theming Contract</a></li>
+      <li><a href="#validation">8. Validation</a></li>
+      <li><a href="#lifecycle-openspec">9. Lifecycle &amp; OpenSpec</a></li>
+      <li><a href="#security-publishing">10. Security &amp; Publishing</a></li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       1. INTRODUCTION
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="introduction">
+    <h2>1. Introduction</h2>
+
+    <p>ArchCustomWidgets is a <strong>monorepo factory</strong> that produces installable widgets and services extending <strong>Caelestia</strong> (HyDE 3.x-based) on <strong>Arch Linux / Hyprland / Wayland</strong>. Units plug into an existing Caelestia setup: waybar modules, standalone widgets, and systemd user services.</p>
+
+    <h3>Gold Rule</h3>
+    <p>Simplicity first. The shortest thing that works. Bash over compiled languages. Copy over symlinks. No new dependency without justification. If a solution needs a paragraph to explain itself, it is too complex &mdash; rewrite it.</p>
+
+    <h3>Stack</h3>
+    <ul style="margin-bottom: 14px; padding-left: 20px;">
+      <li>Primary language: <strong>bash</strong> (bash 5+, <code>set -euo pipefail</code> in scripts)</li>
+      <li>No framework, no build step, no node/rust/go in the unit path.</li>
+      <li>Exception: <strong>python3</strong> allowed in helper scripts only when bash genuinely cannot express it (e.g., parsing complex JSON).</li>
+    </ul>
+
+    <h3>Repo Layout</h3>
+    <pre><code>factory/     # CLI scripts: scaffold, install, update, validate
+widgets/     # widget units
+services/    # service units
+shared/      # theme bridge, common libs
+openspec/    # specs and change proposals
+docs/        # documentation</code></pre>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       2. ARCHITECTURE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="architecture">
+    <h2>2. Architecture</h2>
+
+    <h3>Factory Anatomy</h3>
+    <p>The factory is a collection of bash scripts that validate, scaffold, and install units. Each unit is a self-contained directory that gets copied into the user's <code>~/.config</code> tree.</p>
+
+    <div class="diagram">
+      <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                     ArchCustomWidgets Factory                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌──────────────┐        ┌──────────────────────────────────────┐   │
+│  │ factory/     │        │  Unit Directories                    │   │
+│  │              │        │                                      │   │
+│  │  validate    │───────▶│  widgets/          services/         │   │
+│  │  scaffold    │        │  ├── scheme-rotator  ├── wallpaper   │   │
+│  │  install     │        │  ├── waybar-power    ├── vpn-*       │   │
+│  │  update      │        │  ├── waybar-theme    └── qshell-*    │   │
+│  └──────┬───────┘        │  └── clipboard-rofi                 │   │
+│         │                └──────────────┬───────────────────────┘   │
+│         │                               │                           │
+│         ▼                               ▼                           │
+│  ┌──────────────┐        ┌──────────────────────────────────────┐   │
+│  │ Validation   │        │  Install Targets                     │   │
+│  │              │        │                                      │   │
+│  │  bash -n     │        │  ~/.config/acw/&lt;unit&gt;/             │   │
+│  │  manifest    │        │  ~/.config/systemd/user/            │   │
+│  │  install     │        │  /etc (vpn-surfshark, sudo)         │   │
+│  └──────────────┘        └──────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+    </div>
+
+    <h3>Unit Anatomy</h3>
+    <p>Every unit (widget or service) follows a strict directory structure:</p>
+
+    <div class="diagram">
+      <pre><code>┌────────────────────────────────────────────────────┐
+│  &lt;unit&gt;/                                            │
+│                                                     │
+│  manifest.json   ◄── id, type, deps, stack, entry  │
+│  install.sh      ◄── idempotent copy installer      │
+│  README.md       ◄── docs, config, removal          │
+│  env.conf        ◄── optional unit config           │
+│                                                     │
+│  src/            ◄── scripts (entrypoint + helpers) │
+│  styles/         ◄── CSS / style fragments          │
+│                                                     │
+└────────────────────────────────────────────────────┘</code></pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       3. UNIT CONTRACT
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="unit-contract">
+    <h2>3. Unit Contract</h2>
+
+    <h3>Manifest Schema</h3>
+    <p>The <code>manifest.json</code> file defines the unit identity and metadata. The schema is enforced by <code>factory/validate</code> against <code>factory/manifest.schema.json</code>.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Unit id, lowercase-kebab-case (<code>^[a-z0-9]+(-[a-z0-9]+)*$</code>).</td>
+        </tr>
+        <tr>
+          <td><code>type</code></td>
+          <td>enum</td>
+          <td>Yes</td>
+          <td><code>widget</code> or <code>service</code>.</td>
+        </tr>
+        <tr>
+          <td><code>description</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>One-line description of what the unit does.</td>
+        </tr>
+        <tr>
+          <td><code>stack</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Primary implementation stack (e.g. <code>bash</code>).</td>
+        </tr>
+        <tr>
+          <td><code>entrypoint</code></td>
+          <td>string</td>
+          <td>Yes</td>
+          <td>Path of the entrypoint script, relative to the unit directory.</td>
+        </tr>
+        <tr>
+          <td><code>deps</code></td>
+          <td>array</td>
+          <td>No</td>
+          <td>System packages or external repos the unit depends on.</td>
+        </tr>
+        <tr>
+          <td><code>config</code></td>
+          <td>object</td>
+          <td>No</td>
+          <td>Free-form unit configuration.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Contract Rules</h3>
+    <ol class="step-list">
+      <li><strong>Copy install.</strong> Units install by COPYING files into <code>~/.config</code>. Never symlinks.</li>
+      <li><strong>Idempotent.</strong> <code>install.sh</code> must be safe to re-run. No errors on repeated execution.</li>
+      <li><strong>Backup before overwrite.</strong> Never overwrite an existing user file silently: back it up to <code>&lt;target&gt;.bak-&lt;timestamp&gt;</code> first.</li>
+      <li><strong>Uninstall leaves no trace.</strong> <code>install.sh --remove</code> removes exactly what it installed. No orphaned files, no leftover services.</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       4. UNIT CATALOG
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="unit-catalog">
+    <h2>4. Unit Catalog</h2>
+
+    <p>The factory currently ships <strong>7 active units</strong> (3 services, 4 widgets).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Unit</th>
+          <th>Type</th>
+          <th>Purpose</th>
+          <th>Install Target</th>
+          <th>Manual Wiring</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>services/wallpaper</code></td>
+          <td>service</td>
+          <td>Wallhaven downloader + rofi wallpaper selector + auto-theme pipeline (matugen + dynamic scheme)</td>
+          <td><code>~/.config/acw/wallpaper/</code> + systemd <code>acw-wallpaper-theme.path</code> / <code>.service</code></td>
+          <td>Keybinds: <code>Ctrl+Super+T</code>, <code>Shift+Super+T</code>, <code>Ctrl+Shift+T</code></td>
+        </tr>
+        <tr>
+          <td><code>services/vpn-surfshark</code></td>
+          <td>service</td>
+          <td>Caelestia quick-toggles VPN button; shell.json delta + system units <code>surfshark-connect</code> / <code>surfshark-disconnect</code> (wg-quick + nft kill-switch)</td>
+          <td>System units via sudo</td>
+          <td>sudo install required</td>
+        </tr>
+        <tr>
+          <td><code>services/quickshell-watchdog</code></td>
+          <td>service</td>
+          <td>1-minute timer restarts quickshell if dead; <code>WantedBy=timers.target</code> fix included</td>
+          <td><code>~/.config/systemd/user/</code></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td><code>widgets/scheme-rotator</code></td>
+          <td>widget</td>
+          <td>Rotates 10 Caelestia schemes sequentially</td>
+          <td><code>~/.config/acw/scheme-rotator/</code></td>
+          <td>Keybind: <code>Super+Alt+T</code></td>
+        </tr>
+        <tr>
+          <td><code>widgets/waybar-power</code></td>
+          <td>widget</td>
+          <td>Lock / power / quit / reboot modules with zenity + swaylock</td>
+          <td><code>~/.config/acw/waybar-power/</code></td>
+          <td>Waybar module config</td>
+        </tr>
+        <tr>
+          <td><code>widgets/waybar-theme</code></td>
+          <td>widget</td>
+          <td>Rotates 11 waybar styles via launcher right-click</td>
+          <td><code>~/.config/acw/waybar-theme/</code></td>
+          <td>Waybar module config</td>
+        </tr>
+        <tr>
+          <td><code>widgets/clipboard-rofi</code></td>
+          <td>widget</td>
+          <td>Rofi clipboard picker (cliphist + wl-copy)</td>
+          <td><code>~/.config/acw/clipboard-rofi/</code></td>
+          <td>Keybind: <code>Super+V</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout important">
+      <strong>Known Bug &mdash; vpn-surfshark</strong>
+      <p>The VPN Surfshark unit has a known issue. A fix is reserved in change <code>fix-vpn-surfshark</code> (parked, not yet implemented). Do not deploy vpn-surfshark to production until this change is completed.</p>
+    </div>
+
+    <div class="callout note">
+      <strong>Retired Units (triage 2026-08-14)</strong>
+      <p>The following units have been retired and are no longer part of the active catalog:</p>
+      <ul style="margin-top: 6px; padding-left: 20px;">
+        <li><code>waybar-todo</code></li>
+        <li><code>waybar-countdown</code></li>
+        <li><code>opencode-stats</code></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       5. INSTALL MODEL
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="install-model">
+    <h2>5. Install Model</h2>
+
+    <p>Units install by <strong>copying</strong> files into <code>~/.config</code>. The model is idempotent, reversible, and safe to re-run.</p>
+
+    <h3>Install Steps</h3>
+    <ol class="step-list">
+      <li><strong>Navigate to unit.</strong> <code>cd &lt;unit&gt;</code></li>
+      <li><strong>Run installer.</strong> <code>./install.sh</code> &mdash; copies files, enables services.</li>
+      <li><strong>Re-run is safe.</strong> Installer checks for existing files before overwrite; backs up to <code>.bak-&lt;timestamp&gt;</code>.</li>
+      <li><strong>Uninstall.</strong> <code>./install.sh --remove</code> &mdash; removes exactly what was installed, leaves no trace.</li>
+      <li><strong>System-level units</strong> (e.g., <code>vpn-surfshark</code>) prompt for <code>sudo</code> only for system-level files.</li>
+      <li><strong>Services validated.</strong> <code>systemctl --user enable --now</code> + <code>is-enabled</code> / <code>is-active</code> checks pass.</li>
+    </ol>
+
+    <div class="diagram">
+      <pre><code>┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  User runs   │────▶│  backup-if-      │────▶│  copy files     │
+│  install.sh  │     │  differs         │     │  to ~/.config/  │
+└──────────────┘     └──────────────────┘     └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  systemctl      │
+                                              │  enable --now   │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  validate       │
+                                              │  (is-enabled +  │
+                                              │   is-active)    │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  DONE           │
+                                              └─────────────────┘</code></pre>
+    </div>
+
+    <div class="callout warning">
+      <strong>Backup Rule</strong>
+      <p>Never overwrite an existing user file silently. The installer always backs up to <code>&lt;target&gt;.bak-&lt;timestamp&gt;</code> before overwriting. Backups are excluded from git via <code>.gitignore</code> (<code>*.bak-*</code>).</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       6. SERVICES & SYSTEMD
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="services-systemd">
+    <h2>6. Services &amp; systemd</h2>
+
+    <h3>Naming Convention</h3>
+    <p>All service units follow the pattern <code>&lt;vendor&gt;-&lt;unit&gt;.service</code> where vendor is <code>acw</code>.</p>
+
+    <h3>User vs. System Units</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Scope</th>
+          <th>Unit Path</th>
+          <th>Units</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>User</strong> (<code>--user</code>)</td>
+          <td><code>~/.config/systemd/user/</code></td>
+          <td>wallpaper, quickshell-watchdog</td>
+        </tr>
+        <tr>
+          <td><strong>System</strong> (sudo)</td>
+          <td><code>/etc/systemd/system/</code></td>
+          <td>vpn-surfshark (surfshark-connect / surfshark-disconnect)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Validation Commands</h3>
+    <pre><code># User units
+systemctl --user is-enabled acw-wallpaper-theme.service
+systemctl --user is-active  acw-wallpaper-theme.service
+
+# System units (sudo)
+systemctl is-enabled surfshark-connect.service
+systemctl is-active  surfshark-connect.service</code></pre>
+
+    <div class="callout note">
+      <strong>Timer Units</strong>
+      <p>The <code>quickshell-watchdog</code> service uses a 1-minute timer with <code>WantedBy=timers.target</code> to ensure it starts automatically with the system. The timer triggers the watchdog script, which checks if quickshell is running and restarts it if dead.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       7. THEMING CONTRACT
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="theming-contract">
+    <h2>7. Theming Contract</h2>
+
+    <div class="callout important">
+      <strong>Rule: Never Hardcode Colors</strong>
+      <p>Every unit consumes the active wallbash / Caelestia palette through CSS variables or environment tokens. A unit needing its own colors exposes them as config, never as literals in code.</p>
+    </div>
+
+    <h3>How It Works</h3>
+    <p>Units reference the active theme via CSS variables (for waybar modules and widgets) or environment tokens (for bash scripts). The theme is managed by Caelestia's <code>matugen</code> pipeline, which generates palette files from wallpaper images.</p>
+
+    <h3>Config Centralization</h3>
+    <p>Per-unit configuration is centralized in either:</p>
+    <ul style="margin-bottom: 14px; padding-left: 20px;">
+      <li><code>manifest.json</code> <code>config</code> section &mdash; for structured config</li>
+      <li><code>env.conf</code> at unit root &mdash; for simple key-value pairs</li>
+    </ul>
+
+    <h3>Theme Pipeline</h3>
+    <div class="diagram">
+      <pre><code>┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Wallpaper   │────▶│  systemd .path   │────▶│  matugen image  │
+│  changed     │     │  triggers        │     │  extracts       │
+└──────────────┘     └──────────────────┘     │  palette        │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  caelestia      │
+                                              │  scheme set -n  │
+                                              │  dynamic        │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  shell reload   │
+                                              │  + dcol temps   │
+                                              │  rewrite themes │
+                                              └─────────────────┘</code></pre>
+    </div>
+
+    <div class="callout note">
+      <strong>Palette Consumption</strong>
+      <p>Waybar modules consume the palette via CSS variables (e.g., <code>var(--accent)</code>). Bash scripts consume it via environment tokens set by the Caelestia pipeline. No unit defines its own color literals.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       8. VALIDATION
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="validation">
+    <h2>8. Validation</h2>
+
+    <div class="callout important">
+      <strong>Done Means 100% Functional</strong>
+      <p>A unit is <strong>DONE</strong> only when ALL 7 checks pass. No partial validation. No "mostly working." Every check must succeed.</p>
+    </div>
+
+    <h3>Validation Checklist</h3>
+    <ol class="step-list">
+      <li><strong>bash -n clean.</strong> Every script in the unit passes <code>bash -n</code> (syntax check).</li>
+      <li><strong>manifest validates.</strong> <code>manifest.json</code> validates against the JSON schema via <code>factory/validate</code>.</li>
+      <li><strong>Clean install.</strong> <code>install.sh</code> runs successfully on a fresh target.</li>
+      <li><strong>Uninstall leaves no trace.</strong> <code>install.sh --remove</code> removes exactly what was installed.</li>
+      <li><strong>Service validation.</strong> For service units: <code>systemctl --user is-enabled</code> &amp;&amp; <code>is-active</code> both succeed after install.</li>
+      <li><strong>Theme consumption.</strong> Unit consumes the current theme (visual check against active wallbash palette).</li>
+      <li><strong>Visual smoke test.</strong> For interactive/visual units: manual smoke test performed, noted in README.</li>
+    </ol>
+
+    <h3>factory/validate</h3>
+    <p>The validation script scans both <code>widgets/</code> and <code>services/</code> directories. It checks:</p>
+    <ul style="margin-bottom: 14px; padding-left: 20px;">
+      <li><code>manifest.json</code> exists and conforms to schema</li>
+      <li><code>install.sh</code> exists and is executable</li>
+      <li>Entrypoint script exists at declared path</li>
+      <li>No syntax errors in bash scripts</li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       9. LIFECYCLE & OPENSPEC
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="lifecycle-openspec">
+    <h2>9. Lifecycle &amp; OpenSpec</h2>
+
+    <h3>Lifecycle Steps</h3>
+    <ol class="step-list">
+      <li><strong>Change proposal.</strong> A change is proposed in <code>openspec/changes/</code>. Each change has a <code>proposal.md</code>, <code>design.md</code>, and <code>tasks.md</code>.</li>
+      <li><strong>OpenSpec spec.</strong> The proposal drives a spec in <code>openspec/specs/</code>. Specs use delta-driven format with <code>SHALL</code> / <code>MUST</code> requirements and <code>Scenario</code> blocks.</li>
+      <li><strong>Factory scaffold.</strong> The factory tooling scaffolds a new unit directory from the spec.</li>
+      <li><strong>Implementation.</strong> Code is written to satisfy the spec requirements.</li>
+      <li><strong>Validation.</strong> The full 7-check validation pipeline runs.</li>
+      <li><strong>Archive &amp; sync.</strong> Completed specs and changes are archived. The codemap is updated.</li>
+    </ol>
+
+    <div class="diagram">
+      <pre><code>┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Change      │────▶│  OpenSpec spec   │────▶│  Factory        │
+│  proposal    │     │  (SHALL/MUST)    │     │  scaffold       │
+└──────────────┘     └──────────────────┘     └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  Implementation │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  Validation     │
+                                              │  (7 checks)     │
+                                              └────────┬────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │  Archive +      │
+                                              │  sync codemap   │
+                                              └─────────────────┘</code></pre>
+    </div>
+
+    <h3>Current State</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Change</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Active (parked)</td>
+          <td><code>fix-vpn-surfshark</code></td>
+          <td>Fix for known VPN bug. Reserved, not yet implemented.</td>
+        </tr>
+        <tr>
+          <td>Archived</td>
+          <td><code>2026-08-14-migrate-custom-units</code></td>
+          <td>Migration of custom units into the factory pattern.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Canonical Spec</h3>
+    <p>The canonical unit spec lives at <code>openspec/specs/factory-units/spec.md</code>. All new units must trace back to a requirement in this spec or a new spec derived from it.</p>
+
+    <div class="callout note">
+      <strong>Spec-Driven Development</strong>
+      <p>OpenSpec uses a schema-driven approach (<code>openspec/config.yaml</code>: <code>schema: spec-driven</code>). Specs use formal language: <code>SHALL</code> for mandatory requirements, <code>MUST</code> for absolute requirements. Each requirement has associated <code>Scenario</code> blocks for validation.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       10. SECURITY & PUBLISHING
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section id="security-publishing">
+    <h2>10. Security &amp; Publishing</h2>
+
+    <h3>Gitignore Exclusions</h3>
+    <p>The following files are excluded from version control to prevent sensitive data and local state from leaking into public repositories:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Pattern</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>services/vpn-surfshark/src/nftables.conf</code></td>
+          <td>Live firewall rules (network topology) &mdash; untracked, stays local. Fresh clones lack this file; <code>install.sh</code> of vpn-surfshark unit needs the real file.</td>
+        </tr>
+        <tr>
+          <td><code>**/tasks.txt</code></td>
+          <td>Local user data / state files</td>
+        </tr>
+        <tr>
+          <td><code>**/countdowns.txt</code></td>
+          <td>Local user data / state files</td>
+        </tr>
+        <tr>
+          <td><code>**/.state</code></td>
+          <td>Local user data / state files</td>
+        </tr>
+        <tr>
+          <td><code>**/.current_style_index</code></td>
+          <td>Local user data / state files</td>
+        </tr>
+        <tr>
+          <td><code>*.bak-*</code></td>
+          <td>Backup files created by <code>install.sh</code> during overwrite</td>
+        </tr>
+        <tr>
+          <td><code>.opencode/node_modules/</code></td>
+          <td>Local tooling dependencies</td>
+        </tr>
+        <tr>
+          <td><code>.opencode/package.json</code></td>
+          <td>Local tooling config</td>
+        </tr>
+        <tr>
+          <td><code>.opencode/package-lock.json</code></td>
+          <td>Local tooling lockfile</td>
+        </tr>
+        <tr>
+          <td><code>.opencode/bun.lock</code></td>
+          <td>Local tooling lockfile</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <strong>Secrets Never Shipped</strong>
+      <p>WireGuard configs (<code>/etc/wireguard/surfshark.conf</code>), API keys, tokens, and credentials are <strong>never</strong> part of this repository. They remain outside scope. The vpn-surfshark unit expects the user to provide their own WireGuard config at the expected system path.</p>
+    </div>
+
+    <div class="callout important">
+      <strong>GitHub-Ready Without Leaks</strong>
+      <p>The repository is safe to publish publicly. All sensitive data, state files, backups, and local tooling artifacts are excluded via <code>.gitignore</code>. The only file that could theoretically leak network topology is <code>nftables.conf</code>, which is explicitly untracked.</p>
+    </div>
+
+    <h3>Fresh Clone Impact</h3>
+    <p>When cloning this repository fresh, the <code>vpn-surfshark</code> unit will be <strong>missing its <code>nftables.conf</code></strong> file. The <code>install.sh</code> script for this unit will fail unless the user provides the real firewall rules file. This is by design: the file contains live network topology and must never be committed.</p>
+  </section>
+
+</body>
+</html>
