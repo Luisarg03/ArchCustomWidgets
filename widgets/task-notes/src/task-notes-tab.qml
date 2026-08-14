@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Caelestia.Config
 import qs.components
+import qs.components.controls
 import qs.services
 
 // Dashboard tab listing notes from the shared JSONL store.
@@ -16,7 +17,7 @@ import qs.services
 Item {
     id: root
 
-    readonly property string notesPath: FileUtils.trimFileProtocol(
+    readonly property string notesPath: trimFileProtocol(
         StandardPaths.standardLocations(StandardPaths.StateLocation)[0] + "/caelestia/notes.jsonl")
     property var notes: []
 
@@ -35,6 +36,11 @@ Item {
         onLoaded: root.notes = parseNotes(text())
 
         onLoadFailed: root.notes = [] // missing file = empty list, not an error
+    }
+
+    // Trim the file:// protocol prefix (same helper as the shell's FileUtils).
+    function trimFileProtocol(str) {
+        return str.startsWith("file://") ? str.slice(7) : str;
     }
 
     // JSONL is append-only: newest note is the last line, so iterate in reverse.
@@ -99,7 +105,7 @@ Item {
         }
 
         StyledScrollBar {
-            flickable: parent
+            flickable: notesFlickable
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -149,7 +155,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: Quickshell.execDetached([
-                        FileUtils.trimFileProtocol(Qt.resolvedUrl("toggle_note.sh")),
+                        trimFileProtocol(Qt.resolvedUrl("toggle_note.sh")),
                         row.modelData.id
                     ])
                 }

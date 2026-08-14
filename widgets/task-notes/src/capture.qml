@@ -13,8 +13,13 @@ import Quickshell.Io
 ApplicationWindow {
     id: root
 
-    readonly property string captureScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("capture_append.sh"))
+    readonly property string captureScript: trimFileProtocol(Qt.resolvedUrl("capture_append.sh"))
     property bool submitting: false
+
+    // Trim the file:// protocol prefix (no FileUtils singleton in standalone mode)
+    function trimFileProtocol(str) {
+        return str.startsWith("file://") ? str.slice(7) : str;
+    }
 
     width: 600
     height: 140

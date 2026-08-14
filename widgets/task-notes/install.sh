@@ -7,8 +7,12 @@ source "$SCRIPT_DIR/env.conf"
 
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 UNIT="acw-task-notes"
-QS_SRC_DIR="/etc/xdg/quickshell/caelestia/modules/dashboard"
-QS_DASH_DIR="$HOME/.config/quickshell/caelestia/modules/dashboard"
+# Quickshell resolves the active config from <dir>/<name>/shell.qml, so the user
+# dir must shadow the WHOLE shell tree (not just modules/dashboard) to be picked
+# up. D6 accepts this full shadow.
+QS_SRC_DIR="/etc/xdg/quickshell/caelestia"
+QS_DIR="$HOME/.config/quickshell/caelestia"
+QS_DASH_DIR="$QS_DIR/modules/dashboard"
 
 backup_and_copy() {
     local src="$1" dst="$2"
@@ -99,20 +103,31 @@ install() {
     systemctl --user is-active "$UNIT.path" >/dev/null
     echo "$UNIT.path enabled and active"
 
-    # 3. Shell dashboard override: full modules/dashboard tree copy (relative
-    #    imports break if only Content.qml is copied), then patch + TaskWidget.
+    # 3. Full shell override. The active config is <dir>/caelestia/shell.qml;
+    #    the user dir must mirror the entire /etc/xdg tree for the patched
+    #    Content.qml + TaskWidget.qml to be rendered.
     if [ ! -d "$QS_SRC_DIR" ]; then
-        echo "WARN: $QS_SRC_DIR not found; dashboard override skipped"
+        echo "WARN: $QS_SRC_DIR not found; shell override skipped"
         return 0
     fi
-    if [ -d "$QS_DASH_DIR" ]; then
-        local bak="$QS_DASH_DIR.bak-$(date +%s)"
-        mv "$QS_DASH_DIR" "$bak"
-        echo "backed up existing override: $bak"
+    if [ -d "$QS_DIR" ]; then
+        local bak="$QS_DIR.bak-$(date +%s)"
+        mv "$QS_DIR" "$bak"
+        echo "backed up existing shell dir: $bak"
     fi
-    mkdir -p "$(dirname "$QS_DASH_DIR")"
-    cp -r "$QS_SRC_DIR" "$QS_DASH_DIR"
-    echo "copied dashboard module tree to $QS_DASH_DIR"
+    mkdir -p "$(dirname "$QS_DIR")"
+    cp -r "$QS_SRC_DIR" "$QS_DIR"
+    echo "copied shell tree to $QS_DIR"
+
+    # Restore the user's own config overrides (UtilitiesConfig.qml etc.) from
+    # the most recent backup; the upstream tree has no config/.
+    local backup
+    backup="$(ls -d "$QS_DIR".bak-* 2>/dev/null | head -1 || true)"
+    if [ -n "$backup" ] && [ -d "$backup/config" ]; then
+        rm -rf "$QS_DIR/config"
+        cp -r "$backup/config" "$QS_DIR/config"
+        echo "restored user config from $backup/config"
+    fi
 
     patch_content_qml "$QS_DASH_DIR/Content.qml"
 
@@ -131,12 +146,19 @@ remove() {
           "$SYSTEMD_USER_DIR/$UNIT.service".bak-* \
           "$SYSTEMD_USER_DIR/$UNIT.path".bak-*
     rm -rf "$INSTALL_ROOT"
-    # Remove the override tree only if it is ours (marker: TaskWidget.qml).
-    if [ -f "$QS_DASH_DIR/TaskWidget.qml" ]; then
-        rm -rf "$QS_DASH_DIR"
-        echo "removed dashboard override $QS_DASH_DIR"
+    # Remove the full shell override only if it is ours (marker: shell.qml +
+    # TaskWidget.qml), then restore the most recent pre-install backup.
+    if [ -f "$QS_DIR/shell.qml" ] && [ -f "$QS_DASH_DIR/TaskWidget.qml" ]; then
+        rm -rf "$QS_DIR"
+        local backup
+        backup="$(ls -d "$QS_DIR".bak-* 2>/dev/null | head -1 || true)"
+        if [ -n "$backup" ] && [ -d "$backup" ]; then
+            mv "$backup" "$QS_DIR"
+            echo "restored $backup -> $QS_DIR"
+        fi
+        echo "removed shell override $QS_DIR"
     else
-        echo "WARN: no TaskWidget.qml marker in $QS_DASH_DIR; override left untouched"
+        echo "WARN: no TaskWidget.qml marker in $QS_DIR; shell override left untouched"
     fi
     systemctl --user daemon-reload
     echo "removed $UNIT units and $INSTALL_ROOT"
