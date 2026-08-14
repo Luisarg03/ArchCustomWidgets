@@ -1,0 +1,8 @@
+[Unit]
+Description=Monitor caelestia notes store for new notes to classify
+
+[Path]
+PathChanged=%h/.local/state/caelestia/notes.jsonl
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,8 @@
+{
+  "id": "task-notes",
+  "type": "widget",
+  "description": "Quick note capture (Super+G) with opencode title/type classification and a Caelestia dashboard Tasks tab; systemd .path service embedded",
+  "stack": "bash",
+  "entrypoint": "src/capture.qml",
+  "deps": ["opencode", "quickshell"]
+}
