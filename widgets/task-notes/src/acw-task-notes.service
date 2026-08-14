@@ -1,0 +1,12 @@
+[Unit]
+Description=Classify new caelestia notes (title/type) via opencode
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/acw/task-notes/src/process_notes.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
