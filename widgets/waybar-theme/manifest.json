@@ -1,0 +1,8 @@
+{
+  "id": "waybar-theme",
+  "type": "widget",
+  "description": "Waybar style rotator: cycles styles/style_N.css to style.css and restarts waybar; persists selection in .current_style_index",
+  "stack": "bash",
+  "entrypoint": "src/theme.sh",
+  "deps": ["waybar"]
+}

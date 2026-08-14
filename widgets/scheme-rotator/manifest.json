@@ -1,0 +1,8 @@
+{
+  "id": "scheme-rotator",
+  "type": "widget",
+  "description": "Rotate Caelestia color schemes sequentially (10 schemes, state in ~/.local/state/caelestia-theme-state)",
+  "stack": "bash",
+  "entrypoint": "src/caelestia-auto-theme.sh",
+  "deps": ["caelestia", "matugen", "notify-send"]
+}

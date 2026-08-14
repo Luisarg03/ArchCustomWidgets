@@ -1,0 +1,4 @@
+1|1|NiFi: bateria de pruebas DB2SAP
+2|1|Completar form pase prod
+3|0|plan trabajo spliteo sql CATVARS
+4|0|repasar ingles

@@ -1,0 +1,10 @@
+[Unit]
+Description=Fetch opencode usage stats every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=acw-opencode-stats.service
+
+[Install]
+WantedBy=timers.target

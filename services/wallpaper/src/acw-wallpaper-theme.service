@@ -1,0 +1,6 @@
+[Unit]
+Description=ACW wallpaper auto-theme (matugen + dynamic Caelestia scheme)
+
+[Service]
+Type=oneshot
+ExecStart=/home/hiro03/.config/acw/wallpaper/src/wallpaper-auto-theme.sh
