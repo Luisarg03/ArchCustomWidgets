@@ -62,7 +62,7 @@ The `vpn-surfshark` unit MUST ship the Caelestia quick-toggles shell.json delta 
 
 ### Requirement: Waybar modules ship as widget units
 
-The `waybar-todo`, `waybar-countdown`, `waybar-power` and `waybar-theme` units MUST ship their scripts, state/config files and waybar config fragments.
+The `waybar-power` and `waybar-theme` units MUST ship their scripts, state/config files and waybar config fragments.
 
 #### Scenario: Module produces JSON for waybar
 
@@ -72,7 +72,7 @@ The `waybar-todo`, `waybar-countdown`, `waybar-power` and `waybar-theme` units M
 
 ### Requirement: Support services ship as service units
 
-The `quickshell-watchdog` and `opencode-stats` units MUST ship as systemd user units (`.service` + `.timer`), enabled with the system; the watchdog unit includes the missing `WantedBy=` fix.
+The `quickshell-watchdog` unit MUST ship as a systemd user unit (`.service` + `.timer`), enabled with the system; the unit includes the missing `WantedBy=` fix.
 
 #### Scenario: Services enabled with the system
 
