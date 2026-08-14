@@ -4,14 +4,14 @@ Quick note capture with automatic title/type classification and a Tasks tab in t
 
 ## What it does
 
-- `capture.qml` (Super+G) opens a floating Quickshell window; the note you type is appended to the notes store.
+- `capture.qml` (Ctrl+Super+G) opens a floating Quickshell window; the note you type is appended to the notes store.
 - A systemd user `.path` unit watches the store and fires a oneshot that classifies each new note via `opencode run` (strict-JSON prompt): short `title` + `type` (`task | idea | thought`).
 - The classified notes appear in a new **Tasks** tab of the Caelestia dashboard (`TaskWidget.qml`), live-reloaded with `FileView.watchChanges`.
 
 ## Architecture
 
 ```
-capture.qml (Super+G)
+capture.qml (Ctrl+Super+G)
       |
       v append raw line
 ~/.local/state/caelestia/notes.jsonl   (append-only JSONL, one JSON object per line)
@@ -49,11 +49,13 @@ All are overridable per-invocation via the environment (same names).
 
 ## Keybind (wire manually in ~/.config/hypr/custom/keybinds.conf)
 
-Super+G is **not** auto-applied; add it yourself:
+Ctrl+Super+G is **not** auto-applied; add it yourself:
 
 ```
-bind = SUPER, G, exec, qs -p ~/.config/acw/task-notes/src/capture.qml
+bind = CTRL SUPER, G, exec, qs -p ~/.config/acw/task-notes/src/capture.qml
 ```
+
+The combo was chosen from `docs/keybinds-map.md`: Super+G is taken by togglegroup.
 
 ## See the Tasks tab
 
