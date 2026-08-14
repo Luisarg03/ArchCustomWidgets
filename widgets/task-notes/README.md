@@ -29,10 +29,11 @@ process_notes.sh -> opencode run -> line rewritten in place (title/type/error)
 Record contract (shared by capture, processor and toggle):
 
 ```json
-{"id":"a1b2c3","raw":"texto crudo original","title":"Titulo corto","type":"task","status":"open","created_at":"2026-08-14T17:20:00","error":null}
+{"id":"a1b2c3","raw":"texto crudo original","title":"Titulo corto","type":"task","priority":"medium","tags":["config","hyprland"],"due":"2026-08-20","status":"open","created_at":"2026-08-14T17:20:00","error":null}
 ```
 
-- `raw` always present; `title`/`type` added by the processor; `error` set (string) only when classification failed; `status` toggled `open`/`done` by `toggle_note.sh`.
+- `raw` always present; `title`/`type`/`priority`/`tags`/`due` added by the processor; `error` set (string) only when classification failed; `status` toggled `open`/`done` by `toggle_note.sh`.
+- `title`: short title, max 8 words. `type`: `task | idea | thought`. `priority`: `low | medium | high` (default `medium` if the LLM omits it). `tags`: array of 2-4 lowercase keywords (may be `[]`). `due`: ISO-8601 date `YYYY-MM-DD` or `null` — set only when the note implies a deadline.
 - The processor rewrites lines **in place** (same line count); its progress lives in `$INSTALL_ROOT/.state` (a line offset), so the re-trigger caused by its own rewrite is a no-op.
 
 ## Config

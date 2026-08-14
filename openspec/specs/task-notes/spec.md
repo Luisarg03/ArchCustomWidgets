@@ -37,13 +37,13 @@ The unit MUST store notes in `~/.local/state/caelestia/notes.jsonl`, one JSON ob
 
 ### Requirement: Processing MUST rewrite and classify with the configured LLM
 
-The unit MUST process new notes through the user's opencode providers (`opencode run`, e.g. `-m opencode-go/deepseek-v4-flash`) to produce a `title` and a `type` in `task|idea|thought`. If the LLM call fails or returns invalid JSON, the note MUST be kept with an `error` field and MUST NOT be lost.
+The unit MUST process new notes through the user's opencode providers (`opencode run`, e.g. `-m opencode-go/deepseek-v4-flash`) to produce a `title` and a `type` in `task|idea|thought`, enriched with `priority` (`low|medium|high`, default `medium`), `tags` (array of 2-4 lowercase keywords, may be empty) and `due` (ISO-8601 date `YYYY-MM-DD` or `null`). If the LLM call fails or returns invalid JSON, the note MUST be kept with an `error` field and MUST NOT be lost; malformed `priority`/`tags`/`due` values fall back to defaults instead of failing.
 
 #### Scenario: Raw note gets enriched
 
 - Given a raw note in the store
 - When the processing service runs
-- Then the record gains `title` and `type` (task, idea or thought)
+- Then the record gains `title`, `type` (task, idea or thought), `priority`, `tags` and `due`
 
 #### Scenario: LLM failure keeps the note
 
