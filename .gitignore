@@ -1,0 +1,17 @@
+# Sensitive — live firewall rules (network topology), not for public repos
+services/vpn-surfshark/src/nftables.conf
+
+# Local user data / state files (never publish)
+**/tasks.txt
+**/countdowns.txt
+**/.state
+**/.current_style_index
+
+# Backups of user files created by install.sh
+*.bak-*
+
+# Local tooling
+.opencode/node_modules/
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
