@@ -4,13 +4,7 @@
 
 <div align="center">
 
-![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white)
-![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white)
-![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white)
-![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white)
-![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white)
-![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white)
-![7 units](https://img.shields.io/badge/7_units-0033A1?style=flat-square&logoColor=white)
+![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white) ![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white) ![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white) ![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white) ![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white) ![7 units](https://img.shields.io/badge/7_units-0033A1?style=flat-square&logoColor=white)
 
 </div>
 
