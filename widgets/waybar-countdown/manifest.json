@@ -1,0 +1,8 @@
+{
+  "id": "waybar-countdown",
+  "type": "widget",
+  "description": "Waybar module: selected countdown with progress % and tooltip list; interactive TUI, scroll switches selection",
+  "stack": "bash",
+  "entrypoint": "src/countdown.sh",
+  "deps": ["bc"]
+}

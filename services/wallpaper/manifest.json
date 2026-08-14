@@ -1,0 +1,8 @@
+{
+  "id": "wallpaper",
+  "type": "service",
+  "description": "Wallhaven downloader, rofi wallpaper selector and auto-theme pipeline (matugen + dynamic scheme on wallpaper change)",
+  "stack": "bash",
+  "entrypoint": "src/wallhaven-wallpaper",
+  "deps": ["rofi", "matugen", "curl", "caelestia"]
+}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Surfshark VPN disconnect + remove kill switch
+
+[Service]
+Type=oneshot
+StandardInput=null
+ExecStart=/usr/bin/bash -c 'nft -f /etc/nftables.conf'
+ExecStartPost=-/usr/bin/wg-quick down surfshark

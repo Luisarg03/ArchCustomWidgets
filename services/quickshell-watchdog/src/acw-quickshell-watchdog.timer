@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Caelestia quickshell watchdog every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Unit=acw-quickshell-watchdog.service
+
+[Install]
+WantedBy=timers.target

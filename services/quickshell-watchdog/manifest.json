@@ -1,0 +1,8 @@
+{
+  "id": "quickshell-watchdog",
+  "type": "service",
+  "description": "Restart Caelestia quickshell (qs) if it dies; 1-minute timer with WantedBy=timers.target",
+  "stack": "bash",
+  "entrypoint": "src/caelestia-watchdog.sh",
+  "deps": ["caelestia"]
+}

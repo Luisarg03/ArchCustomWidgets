@@ -1,0 +1,446 @@
+#!/usr/bin/env bash
+# ============================================================
+# Wallhaven Wallpaper Manager for Arch Linux
+# Integrates with swww (Wayland/Hyprland) or feh (X11)
+# ============================================================
+
+set -euo pipefail
+
+# --- Configuración ---
+WALL_DIR="${WALL_DIR:-$HOME/Pictures/wallpapers}"
+WALLHAVEN_DIR="$WALL_DIR/wallhaven"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/wallhaven-wallpaper"
+CONFIG_FILE="$CONFIG_DIR/config"
+HISTORY_FILE="$CONFIG_DIR/history"
+FAVORITES_FILE="$CONFIG_DIR/favorites"
+
+# Wallhaven API defaults
+API_BASE="https://wallhaven.cc/api/v1/search"
+QUERY="${WALLHAVEN_QUERY:-}"
+API_KEY="${WALLHAVEN_API_KEY:-}"
+RESOLUTION="${WALLHAVEN_RESOLUTION:-2560x1440}"
+RATIOS="${WALLHAVEN_RATIOS:-16x9}"
+SORTING="${WALLHAVEN_SORTING:-random}"
+TOPRANGE="${WALLHAVEN_TOPRANGE:-1M}"
+PURITY="${WALLHAVEN_PURITY:-100}"
+CATEGORIES="${WALLHAVEN_CATEGORIES:-111}"
+
+# Desktop environment detection
+set_wallpaper() {
+    local img="$1"
+    
+    if command -v caelestia &>/dev/null; then
+        # Caelestia Shell (Hyprland)
+        caelestia wallpaper -f "$img"
+    elif command -v swww &>/dev/null && [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        # Wayland / Hyprland fallback
+        if pgrep -x swww-daemon &>/dev/null; then
+            swww img "$img" --transition-type=wipe --transition-angle=30
+        else
+            echo "Error: swww daemon no está corriendo. Inicialo con: swww-daemon" >&2
+            return 1
+        fi
+    elif command -v feh &>/dev/null; then
+        # X11 fallback
+        feh --bg-fill "$img"
+    elif command -v nitrogen &>/dev/null; then
+        nitrogen --set-zoom-fill "$img"
+    else
+        echo "Error: No se encontró caelestia, swww, feh, ni nitrogen. Instalá uno." >&2
+        return 1
+    fi
+}
+
+# --- Utilidades ---
+ensure_dirs() {
+    mkdir -p "$WALLHAVEN_DIR" "$CONFIG_DIR"
+    touch "$HISTORY_FILE" "$FAVORITES_FILE"
+}
+
+urlencode() {
+    # Simple urlencode para queries
+    local string="$1"
+    local strlen=${#string}
+    local encoded=""
+    local pos c o
+    
+    for (( pos=0; pos<strlen; pos++ )); do
+        c="${string:$pos:1}"
+        case "$c" in
+            [-_.~a-zA-Z0-9]) encoded+="$c" ;;
+            *) printf -v o '%%%02x' "'$c"; encoded+="$o" ;;
+        esac
+    done
+    echo "$encoded"
+}
+
+# --- API ---
+build_api_url() {
+    local page="${1:-1}"
+    local encoded_query=""
+    
+    if [ -n "$QUERY" ]; then
+        encoded_query=$(urlencode "$QUERY")
+    fi
+    
+    local url="${API_BASE}?sorting=${SORTING}&page=${page}"
+    
+    [ -n "$encoded_query" ] && url="${url}&q=${encoded_query}"
+    [ -n "$API_KEY" ] && url="${url}&apikey=${API_KEY}"
+    [ -n "$RESOLUTION" ] && url="${url}&atleast=${RESOLUTION}"
+    [ -n "$RATIOS" ] && url="${url}&ratios=${RATIOS}"
+    [ -n "$TOPRANGE" ] && [ "$SORTING" = "toplist" ] && url="${url}&topRange=${TOPRANGE}"
+    [ -n "$PURITY" ] && url="${url}&purity=${PURITY}"
+    [ -n "$CATEGORIES" ] && url="${url}&categories=${CATEGORIES}"
+    
+    echo "$url"
+}
+
+download_wallpaper() {
+    local url="$1"
+    local id=$(echo "$url" | grep -oP 'full/\K[^/]+' || echo "unknown")
+    local ext="${url##*.}"
+    [ "$ext" = "jpg" ] || [ "$ext" = "png" ] || [ "$ext" = "jpeg" ] || ext="jpg"
+    
+    local filename="wallhaven-${id}.${ext}"
+    local filepath="$WALLHAVEN_DIR/$filename"
+    
+    if [ -f "$filepath" ]; then
+        echo "Ya existe: $filename" >&2
+        echo "$filepath"
+        return 0
+    fi
+    
+    echo "Descargando: $filename ..." >&2
+    if command -v wget &>/dev/null; then
+        wget -q --show-progress -O "$filepath" "$url" 2>/dev/null || curl -sL -o "$filepath" "$url"
+    else
+        curl -sL --progress-bar -o "$filepath" "$url"
+    fi
+    
+    if [ ! -f "$filepath" ] || [ ! -s "$filepath" ]; then
+        echo "Error: Falló la descarga de $url" >&2
+        rm -f "$filepath"
+        return 1
+    fi
+    
+    echo "$filepath"
+    return 0
+}
+
+pick_random_query() {
+    # Si QUERY tiene comas, elegir una al azar
+    if [[ "$QUERY" == *","* ]]; then
+        local queries=()
+        IFS=',' read -ra queries <<< "$QUERY"
+        local idx=$(( RANDOM % ${#queries[@]} ))
+        local chosen="${queries[$idx]}"
+        echo "${chosen# }"  # trim leading space
+    else
+        echo "$QUERY"
+    fi
+}
+
+fetch_random() {
+    local active_query=$(pick_random_query)
+    local page=$(( RANDOM % 20 + 1 ))
+    
+    # Guardar QUERY original y usar la elegida
+    local original_query="$QUERY"
+    QUERY="$active_query"
+    local url=$(build_api_url "$page")
+    QUERY="$original_query"
+    
+    echo "Buscando en Wallhaven... (page $page, query: ${active_query:-none})" >&2
+    
+    local json
+    if command -v curl &>/dev/null; then
+        json=$(curl -s "$url" 2>/dev/null)
+    elif command -v wget &>/dev/null; then
+        json=$(wget -qO- "$url" 2>/dev/null)
+    else
+        echo "Error: Necesitás curl o wget." >&2
+        return 1
+    fi
+    
+    if [ -z "$json" ] || ! echo "$json" | grep -q '"data"'; then
+        echo "Error: No se pudo obtener respuesta de Wallhaven API" >&2
+        return 1
+    fi
+    
+    # Extraer URLs de imágenes
+    local paths
+    paths=$(echo "$json" | grep -oP '"path":\s*"\K[^"]+' || true)
+    
+    if [ -z "$paths" ]; then
+        echo "No se encontraron wallpapers con esos filtros." >&2
+        return 1
+    fi
+    
+    # Elegir uno aleatorio de los resultados
+    local urls_array=()
+    while IFS= read -r line; do
+        [ -n "$line" ] && urls_array+=("$line")
+    done <<< "$paths"
+    
+    if [ ${#urls_array[@]} -eq 0 ]; then
+        echo "No se encontraron URLs válidas." >&2
+        return 1
+    fi
+    
+    local idx=$(( RANDOM % ${#urls_array[@]} ))
+    local chosen="${urls_array[$idx]}"
+    
+    # Limpiar escapes JSON (\/) de la URL
+    chosen=$(echo "$chosen" | tr -d '\\')
+    
+    echo "$chosen"
+}
+
+# --- Comandos ---
+cmd_new() {
+    ensure_dirs
+    
+    local img_url
+    img_url=$(fetch_random)
+    [ -z "$img_url" ] && return 1
+    
+    local filepath
+    filepath=$(download_wallpaper "$img_url")
+    [ -z "$filepath" ] && return 1
+    
+    # Aplicar wallpaper
+    set_wallpaper "$filepath"
+    
+    # Guardar en historial
+    echo "$(date +%Y-%m-%d_%H:%M:%S) $filepath" >> "$HISTORY_FILE"
+    
+    echo "Wallpaper aplicado: $filepath"
+}
+
+cmd_random() {
+    ensure_dirs
+    
+    local files=()
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(find "$WALL_DIR" -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0 2>/dev/null)
+    
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No hay wallpapers encontrados. Ejecutá: $0 new" >&2
+        return 1
+    fi
+    
+    local idx=$(( RANDOM % ${#files[@]} ))
+    local chosen="${files[$idx]}"
+    
+    set_wallpaper "$chosen"
+    echo "Wallpaper aleatorio: $chosen"
+}
+
+cmd_list() {
+    ensure_dirs
+    
+    local files=()
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(find "$WALLHAVEN_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) -print0 2>/dev/null | sort -z)
+    
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No hay wallpapers en $WALLHAVEN_DIR"
+        return 0
+    fi
+    
+    echo "Wallpapers descargados (${#files[@]}):"
+    for i in "${!files[@]}"; do
+        printf "  [%3d] %s\n" "$i" "$(basename "${files[$i]}")"
+    done
+}
+
+cmd_favorite() {
+    ensure_dirs
+    
+    if [ $# -eq 0 ]; then
+        echo "Uso: $0 favorite <número_de_lista>" >&2
+        echo "Ejecutá '$0 list' para ver los números." >&2
+        return 1
+    fi
+    
+    local idx="$1"
+    local files=()
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(find "$WALLHAVEN_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) -print0 2>/dev/null | sort -z)
+    
+    if ! [[ "$idx" =~ ^[0-9]+$ ]] || [ "$idx" -ge ${#files[@]} ]; then
+        echo "Índice inválido. Ejecutá '$0 list' para ver los disponibles." >&2
+        return 1
+    fi
+    
+    local chosen="${files[$idx]}"
+    local basename_chosen=$(basename "$chosen")
+    
+    if grep -qF "$basename_chosen" "$FAVORITES_FILE" 2>/dev/null; then
+        echo "Ya está en favoritos: $basename_chosen"
+    else
+        echo "$basename_chosen" >> "$FAVORITES_FILE"
+        echo "Agregado a favoritos: $basename_chosen"
+    fi
+    
+    set_wallpaper "$chosen"
+}
+
+cmd_favlist() {
+    ensure_dirs
+    
+    if [ ! -s "$FAVORITES_FILE" ]; then
+        echo "No hay favoritos guardados."
+        return 0
+    fi
+    
+    echo "Favoritos:"
+    local i=0
+    while IFS= read -r line; do
+        [ -n "$line" ] && printf "  [%3d] %s\n" "$i" "$line"
+        ((i++))
+    done < "$FAVORITES_FILE"
+}
+
+cmd_clean() {
+    ensure_dirs
+    
+    # Borrar duplicados por tamaño (mantiene el primero alfabéticamente)
+    echo "Limpiando duplicados por tamaño..."
+    
+    local count=0
+    declare -A sizes
+    
+    while IFS= read -r -d '' file; do
+        local size=$(stat -c%s "$file" 2>/dev/null)
+        if [ -n "$size" ]; then
+            if [ -n "${sizes[$size]:-}" ]; then
+                rm -f "$file"
+                ((count++))
+            else
+                sizes[$size]="$file"
+            fi
+        fi
+    done < <(find "$WALLHAVEN_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) -print0 2>/dev/null | sort -z)
+    
+    echo "Eliminados: $count duplicados"
+}
+
+cmd_info() {
+    ensure_dirs
+    
+    local total
+    total=$(find "$WALLHAVEN_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.jpeg" \) | wc -l)
+    local disk_usage
+    disk_usage=$(du -sh "$WALLHAVEN_DIR" 2>/dev/null | cut -f1)
+    local favorites
+    favorites=$(wc -l < "$FAVORITES_FILE" | tr -d ' ')
+    
+    echo "Estado del Wallpaper Manager:"
+    echo "  Directorio: $WALLHAVEN_DIR"
+    echo "  Wallpapers: $total"
+    echo "  Favoritos:  $favorites"
+    echo "  Uso disco:  $disk_usage"
+    echo "  Query:      ${QUERY:-(ninguna)}"
+    echo "  Resolución: ${RESOLUTION:-(cualquiera)}"
+    echo "  Pureza:     ${PURITY:-100} (100=SFW, 110=sketchy, 111=NSFW+API key)"
+}
+
+cmd_help() {
+    cat << 'EOF'
+Uso: wallhaven-wallpaper <comando> [opciones]
+
+Comandos:
+  new              Descarga un wallpaper nuevo de Wallhaven y lo aplica
+  random           Aplica un wallpaper aleatorio de los ya descargados
+  list             Lista todos los wallpapers descargados con índice
+  favorite <n>     Marca como favorito y aplica el wallpaper n° <n> del listado
+  favlist          Muestra los favoritos guardados
+  clean            Elimina duplicados por tamaño de archivo
+  info             Muestra estadísticas y configuración actual
+  help             Muestra esta ayuda
+
+Variables de entorno (para personalizar sin editar el script):
+  WALL_DIR              Directorio base de wallpapers (default: ~/Pictures/wallpapers)
+  WALLHAVEN_QUERY       Término de búsqueda (ej: "cyberpunk", "nature", "anime")
+  WALLHAVEN_API_KEY     API key de wallhaven.cc (necesario para NSFW)
+  WALLHAVEN_RESOLUTION  Resolución mínima (ej: "2560x1440", "3440x1440")
+  WALLHAVEN_RATIOS      Ratio de aspecto (ej: "16x9", "21x9", "16x10")
+  WALLHAVEN_SORTING     Orden: random, date_added, relevance, views, favorites, toplist
+  WALLHAVEN_TOPRANGE    Para sorting=toplist: 1d, 3d, 1w, 1M, 3M, 6M, 1y
+  WALLHAVEN_PURITY      100=SFW, 110=sketchy, 111=NSFW (requiere API key)
+  WALLHAVEN_CATEGORIES  3 dígitos: General, Anime, People (ej: 111=todo, 100=solo General)
+
+Ejemplos:
+  WALLHAVEN_QUERY=cyberpunk WALLHAVEN_RESOLUTION=3440x1440 ./wallhaven-wallpaper new
+  WALLHAVEN_SORTING=toplist WALLHAVEN_TOPRANGE=1w ./wallhaven-wallpaper new
+  ./wallhaven-wallpaper random
+  ./wallhaven-wallpaper list
+  ./wallhaven-wallpaper favorite 5
+
+Configuración permanente:
+  Creá ~/.config/wallhaven-wallpaper/config con:
+    QUERY=nature
+    RESOLUTION=2560x1440
+    API_KEY=tu_api_key_aquí
+
+Integración con Hyprland:
+  # Añadir a ~/.config/hypr/hyprland.conf:
+  exec-once = swww-daemon
+  bind = $mainMod, W, exec, ~/scripts/wallhaven-wallpaper new
+  bind = $mainMod SHIFT, W, exec, ~/scripts/wallhaven-wallpaper random
+EOF
+}
+
+# --- Carga de configuración ---
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        while IFS='=' read -r key value; do
+            [[ "$key" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "$key" ]] && continue
+            # Trim leading/trailing whitespace sin romper comas
+            key="${key#"${key%%[![:space:]]*}"}"
+            key="${key%"${key##*[![:space:]]}"}"
+            value="${value#"${value%%[![:space:]]*}"}"
+            value="${value%"${value##*[![:space:]]}"}"
+            case "$key" in
+                QUERY) QUERY="$value" ;;
+                API_KEY) API_KEY="$value" ;;
+                RESOLUTION) RESOLUTION="$value" ;;
+                RATIOS) RATIOS="$value" ;;
+                SORTING) SORTING="$value" ;;
+                TOPRANGE) TOPRANGE="$value" ;;
+                PURITY) PURITY="$value" ;;
+                CATEGORIES) CATEGORIES="$value" ;;
+            esac
+        done < "$CONFIG_FILE"
+    fi
+}
+
+# --- Main ---
+main() {
+    load_config
+    ensure_dirs
+    
+    case "${1:-help}" in
+        new|n) cmd_new ;;
+        random|r) cmd_random ;;
+        list|ls) cmd_list ;;
+        favorite|fav|f) cmd_favorite "${2:-}" ;;
+        favlist|fl) cmd_favlist ;;
+        clean|c) cmd_clean ;;
+        info|status) cmd_info ;;
+        help|h|-h|--help) cmd_help ;;
+        *) 
+            echo "Comando desconocido: ${1:-}" >&2
+            echo "Ejecutá '$0 help' para ver los comandos disponibles." >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

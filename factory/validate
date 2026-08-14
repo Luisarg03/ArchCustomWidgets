@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# Validate ArchCustomWidgets units against the manifest contract.
+# Usage: factory/validate [unit-dir]
+#   With a unit-dir: validate that single unit.
+#   With no args: validate every unit dir under widgets/ and services/.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCHEMA="$REPO_ROOT/factory/manifest.schema.json"
+
+# Validate one unit dir. Returns non-zero on any failed check.
+validate_unit() {
+    local unit="$1"
+    local manifest="$unit/manifest.json"
+    local -i failures=0
+
+    echo "== validating $unit"
+
+    if [[ ! -f "$manifest" ]]; then
+        echo "  FAIL: $manifest missing"
+        return 1
+    fi
+
+    if ! python3 - "$manifest" "$SCHEMA" <<'PYEOF'
+import json
+import sys
+
+manifest_path, schema_path = sys.argv[1], sys.argv[2]
+
+try:
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+except (OSError, json.JSONDecodeError) as e:
+    print(f"  FAIL: {manifest_path} does not parse as JSON: {e}")
+    sys.exit(1)
+
+try:
+    with open(schema_path) as f:
+        schema = json.load(f)
+except (OSError, json.JSONDecodeError) as e:
+    print(f"  FAIL: schema {schema_path} does not parse as JSON: {e}")
+    sys.exit(1)
+
+try:
+    import jsonschema
+except ImportError:
+    print("  FAIL: python jsonschema module not installed (pip install jsonschema)")
+    sys.exit(1)
+
+validator = jsonschema.Draft202012Validator(schema)
+errors = sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
+if errors:
+    for e in errors:
+        print(f"  FAIL: schema error at {'/'.join(map(str, e.path)) or '<root>'}: {e.message}")
+    sys.exit(1)
+PYEOF
+    then
+        ((failures += 1)) || true
+    else
+        echo "  OK: manifest.json parses and validates against schema"
+    fi
+
+    local id type entrypoint
+    id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$manifest")
+    type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["type"])' "$manifest")
+    entrypoint=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["entrypoint"])' "$manifest")
+
+    if [[ "$type" != "widget" && "$type" != "service" ]]; then
+        echo "  FAIL: type '$type' not in {widget, service}"
+        ((failures += 1)) || true
+    fi
+
+    if [[ ! -d "$unit/src" ]]; then
+        echo "  FAIL: $unit/src directory missing"
+        ((failures += 1)) || true
+    fi
+
+    if [[ ! -f "$unit/$entrypoint" ]]; then
+        echo "  FAIL: entrypoint '$entrypoint' not found under $unit"
+        ((failures += 1)) || true
+    fi
+
+    if [[ ! -f "$unit/install.sh" ]]; then
+        echo "  FAIL: $unit/install.sh missing"
+        ((failures += 1)) || true
+    elif ! bash -n "$unit/install.sh" 2>/dev/null; then
+        echo "  FAIL: $unit/install.sh fails bash -n"
+        ((failures += 1)) || true
+    fi
+
+    if [[ ! -f "$unit/README.md" ]]; then
+        echo "  FAIL: $unit/README.md missing"
+        ((failures += 1)) || true
+    fi
+
+    local script
+    while IFS= read -r -d '' script; do
+        if ! bash -n "$script" 2>/dev/null; then
+            echo "  FAIL: $script fails bash -n"
+            ((failures += 1)) || true
+        fi
+    done < <(find "$unit" -name '*.sh' -type f -print0)
+
+    if (( failures == 0 )); then
+        echo "  PASS: unit $id ($type)"
+        return 0
+    fi
+    echo "  FAIL: unit $id has $failures failed check(s)"
+    return 1
+}
+
+# Validate one unit given on argv, or scan widgets/ + services/.
+if (($# == 1)); then
+    unit="$1"
+    if [[ ! -d "$unit" ]]; then
+        echo "error: no such unit directory: $unit" >&2
+        exit 1
+    fi
+    if [[ ! -f "$unit/manifest.json" ]]; then
+        echo "error: $unit/manifest.json missing; not a unit" >&2
+        exit 1
+    fi
+    validate_unit "$unit"
+    exit 0
+elif (($# > 1)); then
+    echo "usage: factory/validate [unit-dir]" >&2
+    exit 1
+fi
+
+count=0
+failed=0
+for root in "$REPO_ROOT"/widgets "$REPO_ROOT"/services; do
+    [[ -d "$root" ]] || continue
+    for unit in "$root"/*; do
+        [[ -d "$unit" && -f "$unit/manifest.json" ]] || continue
+        if validate_unit "$unit"; then
+            ((count += 1)) || true
+        else
+            ((count += 1)) || true
+            ((failed += 1)) || true
+        fi
+    done
+done
+
+if (( count == 0 )); then
+    echo "no unit dirs found under widgets/ or services/; nothing to validate"
+    exit 0
+fi
+echo "validated $count unit(s), $failed failed"
+(( failed == 0 ))

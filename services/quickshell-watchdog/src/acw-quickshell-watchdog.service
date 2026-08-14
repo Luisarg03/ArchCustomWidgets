@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart Caelestia quickshell (qs) if it dies
+
+[Service]
+Type=oneshot
+ExecStart=$HOME/.config/acw/quickshell-watchdog/src/caelestia-watchdog.sh

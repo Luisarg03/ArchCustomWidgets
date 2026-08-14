@@ -1,0 +1,8 @@
+{
+  "id": "clipboard-rofi",
+  "type": "widget",
+  "description": "Rofi clipboard picker (cliphist + wl-copy)",
+  "stack": "bash",
+  "entrypoint": "src/clipboard-rofi.sh",
+  "deps": ["cliphist", "rofi", "wl-clipboard"]
+}

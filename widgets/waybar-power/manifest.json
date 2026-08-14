@@ -1,0 +1,8 @@
+{
+  "id": "waybar-power",
+  "type": "widget",
+  "description": "Waybar modules: lock (swaylock with random wallpaper) and power actions (shutdown/logout/reboot with zenity confirmation)",
+  "stack": "bash",
+  "entrypoint": "src/power.sh",
+  "deps": ["swaylock", "zenity"]
+}

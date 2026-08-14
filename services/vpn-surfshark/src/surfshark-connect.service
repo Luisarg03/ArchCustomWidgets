@@ -1,0 +1,9 @@
+[Unit]
+Description=Surfshark VPN connect + kill switch
+
+[Service]
+Type=oneshot
+StandardInput=null
+ExecStartPre=-/usr/bin/ip link delete surfshark
+ExecStart=/usr/bin/wg-quick up surfshark
+ExecStartPost=/usr/bin/bash -c 'nft flush chain inet filter output; nft add rule inet filter output oif "lo" accept; nft add rule inet filter output ip daddr 127.0.0.1 accept; nft add rule inet filter output udp dport 51820 accept; nft add rule inet filter output oif "surfshark" accept; nft chain inet filter output "{ policy drop ; }"'
