@@ -1,0 +1,78 @@
+/* base.css — shared layout for all waybar styles.
+   ponytail: extracted common structure (was duplicated 11× → 1681 lines).
+   Each style_*.css now does @import "base.css" and only overrides --accent/--bg. */
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Font Awesome 5 Free", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    min-height: 0;
+}
+
+:root {
+    --bg-dark: #1e222a;
+    --bg: #282c34;
+    --fg: #abb2bf;
+    --accent: #61afef;
+    --accent-warn: #e06c75;
+    --accent-alt: #c678dd;
+}
+
+window#waybar {
+    background: var(--bg-dark);
+    color: var(--fg);
+}
+
+tooltip {
+    border-radius: 10px;
+    background-color: var(--bg);
+    border: 1px solid var(--accent);
+}
+
+/* Modules: base pill */
+#clock, #custom-todo, #custom-countdown, #backlight, #pulseaudio,
+#custom-clip, #custom-snip, #custom-taskmanager, #custom-calculator,
+#tray, #idle_inhibitor, #custom-power, #custom-reboot, #custom-quit,
+#custom-lock, #custom-launcher {
+    background: var(--bg);
+    padding: 3px 13px;
+    margin: 4px;
+    border-radius: 8px;
+    transition: color 0.3s ease;
+}
+
+#custom-chrome, #custom-terminal, #custom-code, #custom-music, #custom-thunar {
+    background: var(--bg);
+    padding: 3px 13px;
+    margin-top: 4px;
+    margin-right: 2px;
+    margin-bottom: 4px;
+    border-radius: 0;
+}
+
+#custom-chrome { margin-left: 0; border-radius: 20px 0 0 20px; }
+#custom-thunar { margin-right: 4px; border-radius: 0 20px 20px 0; }
+
+#custom-launcher:hover, #custom-todo:hover, #backlight:hover, #pulseaudio:hover,
+#custom-clip:hover, #custom-snip:hover, #custom-chrome:hover, #custom-terminal:hover,
+#custom-code:hover, #custom-music:hover, #custom-taskmanager:hover, #custom-calculator:hover,
+#custom-thunar:hover, #tray:hover, #idle_inhibitor:hover, #custom-reboot:hover,
+#custom-quit:hover, #custom-lock:hover { color: var(--accent); }
+#custom-power:hover { color: var(--accent-warn); }
+
+#clock, #custom-countdown, #custom-todo, #custom-launcher { color: var(--accent); font-weight: bold; }
+#custom-power { color: var(--accent-alt); }
+
+#keyboard-state { background: transparent; }
+#keyboard-state label.locked {
+    background: var(--bg);
+    color: var(--accent);
+    padding: 0 12px;
+    margin: 4px 0;
+    border-radius: 8px;
+}
+#taskbar { background: var(--bg); padding: 0 5px; margin: 4px; border-radius: 8px; }
+#taskbar button { background: transparent; padding: 0 8px; border-bottom: 3px solid transparent; transition: border-bottom-color 0.3s ease-out; }
+#taskbar button:hover { border-bottom-color: var(--fg); }
+#taskbar button.active { border-bottom-color: var(--accent); }

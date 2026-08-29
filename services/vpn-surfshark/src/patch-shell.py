@@ -10,13 +10,9 @@ CLI:
     patch-shell.py --remove [--shell-json PATH]  # remove only our entries
 """
 
-import argparse
-import copy
-import json
-import shutil
-import sys
-import time
+import argparse, copy, json, shutil, sys, time
 from pathlib import Path
+# ponytail: kept python for safe JSON; jq alternative: jq '.utilities.quickToggles+=...' shell.json
 
 DEFAULT_SHELL_JSON = Path.home() / ".config" / "caelestia" / "shell.json"
 

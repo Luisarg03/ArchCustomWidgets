@@ -22,37 +22,19 @@ validate_unit() {
     fi
 
     if ! python3 - "$manifest" "$SCHEMA" <<'PYEOF'
-import json
-import sys
-
+import json, sys
 manifest_path, schema_path = sys.argv[1], sys.argv[2]
-
 try:
-    with open(manifest_path) as f:
-        manifest = json.load(f)
+    manifest = json.load(open(manifest_path))
+    schema = json.load(open(schema_path))
 except (OSError, json.JSONDecodeError) as e:
-    print(f"  FAIL: {manifest_path} does not parse as JSON: {e}")
-    sys.exit(1)
-
-try:
-    with open(schema_path) as f:
-        schema = json.load(f)
-except (OSError, json.JSONDecodeError) as e:
-    print(f"  FAIL: schema {schema_path} does not parse as JSON: {e}")
-    sys.exit(1)
-
+    print(f"  FAIL: JSON parse error: {e}"); sys.exit(1)
 try:
     import jsonschema
 except ImportError:
-    print("  FAIL: python jsonschema module not installed (pip install jsonschema)")
-    sys.exit(1)
-
-validator = jsonschema.Draft202012Validator(schema)
-errors = sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
-if errors:
-    for e in errors:
-        print(f"  FAIL: schema error at {'/'.join(map(str, e.path)) or '<root>'}: {e.message}")
-    sys.exit(1)
+    print("  FAIL: python jsonschema not installed (pip install jsonschema)"); sys.exit(1)
+for e in sorted(jsonschema.Draft202012Validator(schema).iter_errors(manifest), key=lambda x: list(x.path)):
+    print(f"  FAIL: schema error at {'/'.join(map(str,e.path)) or '<root>'}: {e.message}"); sys.exit(1)
 PYEOF
     then
         ((failures += 1)) || true
@@ -60,10 +42,13 @@ PYEOF
         echo "  OK: manifest.json parses and validates against schema"
     fi
 
+    # Single python invocation for id/type/entrypoint (was 3 spawns)
     local id type entrypoint
-    id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["id"])' "$manifest")
-    type=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["type"])' "$manifest")
-    entrypoint=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["entrypoint"])' "$manifest")
+    read -r id type entrypoint < <(python3 - "$manifest" <<'PY'
+import json, sys
+m=json.load(open(sys.argv[1])); print(m["id"], m["type"], m["entrypoint"])
+PY
+)
 
     if [[ "$type" != "widget" && "$type" != "service" ]]; then
         echo "  FAIL: type '$type' not in {widget, service}"

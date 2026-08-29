@@ -1,20 +1,37 @@
 # clipboard-rofi
 
-Rofi clipboard picker backed by cliphist and wl-copy.
+Rofi clipboard picker backed by `cliphist` and `wl-copy`.
 
-## Usage
+## What it does
 
-`src/clipboard-rofi.sh` opens a rofi menu with the clipboard history; the selected entry is copied back to the clipboard with `wl-copy`.
+`src/clipboard-rofi.sh` shows clipboard history in rofi; selecting an entry copies it with `wl-copy`.
 
-## Keybind (wire manually in hyprland.conf)
+## Prerequisites
 
-Super+V → `~/.config/acw/clipboard-rofi/src/clipboard-rofi.sh`
+`cliphist`, `wl-clipboard` (`wl-copy`), `rofi`, Hyprland.
 
-## Install / Remove
+## Install
 
 ```sh
-./install.sh          # install script to ~/.config/acw/clipboard-rofi/src
-./install.sh --remove # remove; deletes the install root, leaves no trace
+./install.sh          # copies to ~/.config/acw/clipboard-rofi/src
 ```
 
-Install root override: `INSTALL_ROOT=/path ./install.sh`
+Idempotent; existing differing files backed up as `.bak-<timestamp>`.
+
+## Keybinds
+
+Wire manually (never auto-applied). Check `docs/keybinds-map.md` before adding.
+
+```
+bind = SUPER, V, exec, ~/.config/acw/clipboard-rofi/src/clipboard-rofi.sh
+```
+
+## Config
+
+`INSTALL_ROOT` override: `INSTALL_ROOT=/path ./install.sh`. No other config.
+
+## Remove
+
+```sh
+./install.sh --remove # deletes install root, leaves no trace
+```
