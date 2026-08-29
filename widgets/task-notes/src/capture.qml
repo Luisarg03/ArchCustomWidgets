@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import Qt.labs.platform
 import Quickshell
 import Quickshell.Io
 
@@ -59,7 +60,8 @@ ApplicationWindow {
     // --- Theme loading from wallbash scheme ---
     FileView {
         id: schemeFile
-        path: "/home/hiro03/.local/state/caelestia/scheme.json"
+        path: StandardPaths.writableLocation(StandardPaths.HomeLocation)
+              + "/.local/state/caelestia/scheme.json"
         watchChanges: false
         onLoaded: {
             try {

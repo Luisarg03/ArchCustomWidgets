@@ -2,13 +2,17 @@
 # Idempotent offset-based processor for the caelestia notes store.
 #
 # Triggered by acw-task-notes.path on every write to the notes JSONL.
-# New (or previously failed) lines are classified via `opencode run` with a
-# strict-JSON prompt and rewritten in place with title/type (or an error field).
+# Lines that still need work (new, errored, or all with --reclassify) are sent
+# as ONE batch to `opencode run --pure` (one cold boot + one LLM call instead of
+# one spawn per note) and rewritten in place with title/type (or an error field).
 # The processed offset is persisted in $INSTALL_ROOT/.state, so the re-trigger
 # caused by our own rewrite of the file is a no-op.
 #
-# --retry: ignore the offset and reprocess every line that still needs work
-# (errored or not yet enriched). Enriched lines are skipped without an LLM call.
+# --retry:      ignore the offset and reprocess every line that still needs work
+#               (errored or not yet enriched). Enriched lines are skipped.
+# --reclassify: like --retry but ALSO reprocess already-enriched lines (used after
+#               prompt changes or to fix misclassifications). On failure the
+#               previous fields are kept and only `error` is set.
 set -euo pipefail
 
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.config/acw/task-notes}"
@@ -26,9 +30,13 @@ if ! command -v opencode >/dev/null 2>&1 && [ -x "$HOME/.opencode/bin/opencode" 
 fi
 
 RETRY=0
-if [ "${1:-}" = "--retry" ]; then
-    RETRY=1
-fi
+RECLASSIFY=0
+for arg in "${@:-}"; do
+    case "$arg" in
+        --retry) RETRY=1 ;;
+        --reclassify) RECLASSIFY=1 ;;
+    esac
+done
 
 [ -f "$NOTES_FILE" ] || exit 0
 mkdir -p "$INSTALL_ROOT"
@@ -38,8 +46,15 @@ if [ -f "$STATE_FILE" ]; then
     OFFSET="$(cat "$STATE_FILE")"
 fi
 
+# Serialize every read-modify-write of the store (capture, toggle, set_type and
+# this processor share the same lock) so concurrent rewrites cannot lose notes.
+LOCK_FILE="$NOTES_FILE.lock"
+exec 9>"$LOCK_FILE"
+flock -w 15 9
+
 export ACW_NOTES_FILE="$NOTES_FILE" ACW_STATE_FILE="$STATE_FILE" \
-       ACW_OFFSET="$OFFSET" ACW_MODEL="$MODEL" ACW_RETRY="$RETRY"
+       ACW_OFFSET="$OFFSET" ACW_MODEL="$MODEL" ACW_RETRY="$RETRY" \
+       ACW_RECLASSIFY="$RECLASSIFY"
 
 python3 - <<'PY'
 import datetime
@@ -54,25 +69,52 @@ STATE_FILE = os.environ["ACW_STATE_FILE"]
 MODEL = os.environ["ACW_MODEL"]
 OFFSET = int(os.environ["ACW_OFFSET"])
 RETRY = os.environ["ACW_RETRY"] == "1"
+RECLASSIFY = os.environ["ACW_RECLASSIFY"] == "1"
 
 VALID_TYPES = {"task", "idea", "thought"}
 VALID_PRIORITIES = {"low", "medium", "high"}
+
+
+def _tomorrow():
+    return (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+
+
+def _next_friday(today):
+    d = datetime.date.fromisoformat(today)
+    days_ahead = (4 - d.weekday()) % 7 or 7
+    return (d + datetime.timedelta(days=days_ahead)).isoformat()
+
+
+TODAY = datetime.date.today().isoformat()
 PROMPT = (
-    'Classify the following note for a personal task manager. Reply with ONLY '
-    'a JSON object with exactly these fields: "title" (short title, max 8 words), '
-    '"type" (one of: task, idea, thought), "priority" (one of: low, medium, high), '
-    '"tags" (array of 2-4 short lowercase keywords), "due" (ISO-8601 date YYYY-MM-DD '
-    'or null — only if the note implies a deadline or time constraint, otherwise null). '
-    'Definitions: task = something to do or fix; idea = a possibility, question, or '
-    'spontaneous thought to explore later; thought = a general observation or note with '
-    'no action implied. Examples: "comprar leche y pan" -> {"title": "Buy milk and bread", '
-    '"type": "task", "priority": "medium", "tags": ["shopping"], "due": null}; '
-    '"llamar al dentista manana" -> {"title": "Call dentist", "type": "task", '
-    '"priority": "high", "tags": ["health"], "due": "2026-08-15"}; '
-    '"que pasaria si migramos a postgres" -> {"title": "Consider migrating to postgres", '
-    '"type": "idea", "priority": "low", "tags": ["database"], "due": null}. '
-    'No markdown, no explanation, no extra text. Raw note: '
-)
+    "Today is %s. You classify notes for a personal task manager. Reply with "
+    "ONLY a JSON array (no markdown, no explanation, no extra text) with exactly "
+    'one object per input note, echoing its "id", each object with exactly these '
+    'fields: "id", "title" (short title, max 8 words, in the SAME language as '
+    'the note; start tasks with a verb), "type" (one of: task, idea, thought), '
+    '"priority" (one of: low, medium, high), "tags" (array of 2-4 short lowercase '
+    'keywords, reusing domain words present in the note such as galicia, ibk, '
+    'pipeline, blog), "due" (ISO-8601 date YYYY-MM-DD or null).\n'
+    "Type rules: task = something to do or fix (an action, instruction, "
+    'deliverable or pending work); idea = a possibility, question or exploration '
+    'to consider later ("que pasaria si", "idea:", "podriamos"); thought = an '
+    "observation or note with no action implied. Prefer task when the note "
+    "implies doing something.\n"
+    'Due rules: set a date ONLY when the note explicitly mentions a date, day '
+    'of the week or deadline ("manana", "viernes", "antes del 20", "2026-08-30"). '
+    "Otherwise null. Never guess or invent dates.\n"
+    "Priority rules: high = deadline or urgency words; low = exploration, "
+    '"algun dia", questions; medium otherwise.\n'
+    "Examples (input -> output):\n"
+    '[{"id":"e1","raw":"comprar leche y pan"},{"id":"e2","raw":"llamar al dentista manana"},'
+    '{"id":"e3","raw":"que pasaria si migramos a postgres"},'
+    '{"id":"e4","raw":"Galicia: armar hojas opera antes del viernes"}] ->\n'
+    '[{"id":"e1","title":"Comprar leche y pan","type":"task","priority":"medium","tags":["compras"],"due":null},'
+    '{"id":"e2","title":"Llamar al dentista","type":"task","priority":"high","tags":["salud"],"due":"%s"},'
+    '{"id":"e3","title":"Migrar a postgres","type":"idea","priority":"low","tags":["database"],"due":null},'
+    '{"id":"e4","title":"Armar hojas opera","type":"task","priority":"high","tags":["galicia","opera"],"due":"%s"}]\n'
+    "Input notes (JSON array): "
+) % (TODAY, _tomorrow(), _next_friday(TODAY))
 
 
 def clean_tags(tags):
@@ -100,36 +142,10 @@ def clean_due(due):
     return due
 
 
-def classify(raw):
-    """Run the LLM. Returns (fields dict, None) on success, (None, error_msg) on failure."""
-    try:
-        proc = subprocess.run(
-            ["opencode", "run", "-m", MODEL, PROMPT + raw],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-    except FileNotFoundError:
-        return None, "opencode not installed"
-    except subprocess.TimeoutExpired:
-        return None, "opencode timeout (60s)"
-    if proc.returncode != 0:
-        msg = "opencode failed"
-        err = (proc.stderr or "").strip().splitlines()
-        if err:
-            msg += ": " + err[-1][:60]
-        return None, msg
-    out = proc.stdout.strip()
-    # Tolerate markdown fences / trailing noise: full parse, then brace-substring.
-    try:
-        obj = json.loads(out)
-    except json.JSONDecodeError:
-        try:
-            obj = json.loads(out[out.index("{"):out.rindex("}") + 1])
-        except (ValueError, json.JSONDecodeError):
-            return None, "invalid LLM JSON"
-    title = obj.get("title")
-    ntype = obj.get("type")
+def validate_fields(entry):
+    """Validate one LLM entry. Returns (fields dict, None) or (None, error_msg)."""
+    title = entry.get("title")
+    ntype = entry.get("type")
     if not isinstance(title, str) or not title.strip():
         return None, "missing title"
     if ntype not in VALID_TYPES:
@@ -138,17 +154,77 @@ def classify(raw):
     if len(words) > 8:
         title = " ".join(words[:8])
     # priority/tags/due are tolerated: bad values fall back to defaults, not errors.
-    priority = obj.get("priority", "medium")
+    priority = entry.get("priority", "medium")
     if priority not in VALID_PRIORITIES:
         priority = "medium"
     fields = {
         "title": title,
         "type": ntype,
         "priority": priority,
-        "tags": clean_tags(obj.get("tags")),
-        "due": clean_due(obj.get("due")),
+        "tags": clean_tags(entry.get("tags")),
+        "due": clean_due(entry.get("due")),
     }
     return fields, None
+
+
+def classify_batch(items):
+    """Classify several notes in ONE LLM call.
+
+    Returns {id: (fields, None)} on success or {id: (None, error_msg)} per item.
+    """
+    results = {}
+    timeout = 120 if len(items) <= 10 else 180
+    payload = PROMPT + json.dumps(items, ensure_ascii=False)
+    try:
+        proc = subprocess.run(
+            ["opencode", "run", "--pure", "-m", MODEL, payload],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except FileNotFoundError:
+        for it in items:
+            results[it["id"]] = (None, "opencode not installed")
+        return results
+    except subprocess.TimeoutExpired:
+        for it in items:
+            results[it["id"]] = (None, "opencode timeout (%ds)" % timeout)
+        return results
+    if proc.returncode != 0:
+        msg = "opencode failed"
+        err = (proc.stderr or "").strip().splitlines()
+        if err:
+            msg += ": " + err[-1][:60]
+        for it in items:
+            results[it["id"]] = (None, msg)
+        return results
+    out = proc.stdout.strip()
+    # Tolerate markdown fences / trailing noise: full parse, then bracket-substring.
+    try:
+        obj = json.loads(out)
+    except json.JSONDecodeError:
+        try:
+            obj = json.loads(out[out.index("["):out.rindex("]") + 1])
+        except (ValueError, json.JSONDecodeError):
+            for it in items:
+                results[it["id"]] = (None, "invalid LLM JSON")
+            return results
+    by_id = {}
+    if isinstance(obj, list):
+        for entry in obj:
+            if isinstance(entry, dict) and entry.get("id") is not None:
+                by_id[str(entry["id"])] = entry
+    elif isinstance(obj, dict):
+        # tolerate an object keyed by id: {"a": {...}}
+        by_id = {str(k): v for k, v in obj.items() if isinstance(v, dict)}
+    for it in items:
+        entry = by_id.get(it["id"])
+        if not isinstance(entry, dict):
+            results[it["id"]] = (None, "missing id in LLM output")
+            continue
+        fields, err = validate_fields(entry)
+        results[it["id"]] = (fields, err)
+    return results
 
 
 def main():
@@ -161,11 +237,11 @@ def main():
 
     lines = text.splitlines()
     total = len(lines)
-    start = 0 if RETRY else min(OFFSET, total)
+    start = 0 if (RETRY or RECLASSIFY) else min(OFFSET, total)
 
     new_offset = start
-    changed = False
-    processed = 0
+    work = []            # (index, record) needing classification
+    was_enriched = {}    # index -> bool (reclassify failure keeps old fields)
 
     for i in range(start, total):
         line = lines[i].strip()
@@ -176,23 +252,39 @@ def main():
             rec = json.loads(line)
         except json.JSONDecodeError:
             break  # partial append in flight; wait for it to complete
-        if rec.get("title") and rec.get("type") in VALID_TYPES and not rec.get("error"):
+        enriched = bool(
+            rec.get("title") and rec.get("type") in VALID_TYPES and not rec.get("error")
+        )
+        if enriched and not RECLASSIFY:
             new_offset = i + 1  # already enriched; skip without an LLM call
             continue
-        fields, err = classify(rec.get("raw", ""))
-        if fields is not None:
-            rec.update(fields)
-            rec["error"] = None
-            print("processed %s: %s (%s)" % (rec.get("id", "?"), fields["title"], fields["type"]))
-        else:
-            rec["error"] = err
-            print("failed %s: %s" % (rec.get("id", "?"), err))
-        lines[i] = json.dumps(rec, ensure_ascii=False)
-        new_offset = i + 1
-        changed = True
-        processed += 1
+        work.append((i, rec))
+        was_enriched[i] = enriched
 
-    if changed:
+    if work:
+        items = [
+            {"id": rec.get("id", ""), "raw": rec.get("raw", "")} for _, rec in work
+        ]
+        results = classify_batch(items)
+        processed = 0
+        for i, rec in work:
+            fields, err = results.get(rec.get("id", ""), (None, "missing id in LLM output"))
+            if fields is not None:
+                rec.update(fields)
+                rec["error"] = None
+                print("processed %s: %s (%s)" % (rec.get("id", "?"), fields["title"], fields["type"]))
+            elif was_enriched[i]:
+                # Reclassify failure: keep the previous good fields, only flag it.
+                rec["error"] = err
+                print("kept %s: %s" % (rec.get("id", "?"), err))
+            else:
+                rec["error"] = err
+                print("failed %s: %s" % (rec.get("id", "?"), err))
+            lines[i] = json.dumps(rec, ensure_ascii=False)
+            new_offset = i + 1
+            processed += 1
+
+    if work:
         # Rewrite in place preserving the line count (offset contract).
         payload = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
         fd, tmp = tempfile.mkstemp(dir=os.path.dirname(NOTES_FILE), text=True)
@@ -207,8 +299,8 @@ def main():
         f.write(str(new_offset))
     os.replace(tmp, STATE_FILE)
 
-    if processed:
-        print("processed %d note(s), offset %d -> %d" % (processed, start, new_offset))
+    if work:
+        print("processed %d note(s), offset %d -> %d" % (len(work), start, new_offset))
 
 
 if __name__ == "__main__":

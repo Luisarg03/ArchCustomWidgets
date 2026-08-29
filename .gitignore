@@ -10,8 +10,15 @@ services/vpn-surfshark/src/nftables.conf
 # Backups of user files created by install.sh
 *.bak-*
 
-# Local tooling
-.opencode/node_modules/
-.opencode/package.json
-.opencode/package-lock.json
-.opencode/bun.lock
+# Local user notes store (created at runtime by task-notes)
+**/notes.jsonl
+
+# Local tooling & work-in-progress specs (keep openspec/specs/ canonical)
+.opencode/
+openspec/changes/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
