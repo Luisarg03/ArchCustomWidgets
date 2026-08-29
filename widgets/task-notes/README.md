@@ -5,26 +5,39 @@ Quick note capture with automatic title/type classification and a Tasks tab in t
 ## What it does
 
 - `capture.qml` (Ctrl+Super+G) opens a floating Quickshell window; the note you type is appended to the notes store.
-- A systemd user `.path` unit watches the store and fires a oneshot that classifies each new note via `opencode run` (strict-JSON prompt): short `title` + `type` (`task | idea | thought`).
-- The classified notes appear in a new **Tasks** tab of the Caelestia dashboard (`TaskWidget.qml`), live-reloaded with `FileView.watchChanges`.
+- A systemd user `.path` unit watches the store and fires a oneshot that classifies pending notes in **one batched `opencode run --pure` call** (single cold boot + single LLM call — a batch of 12 notes classifies in ~15s): short `title` + `type` (`task | idea | thought`) + `priority`, `tags` and `due`. The title keeps the note's language; `due` is only set when the note explicitly mentions a date (no invented deadlines).
+- The classified notes appear in a **Tasks** tab of the Caelestia dashboard (`TaskWidget.qml`), live-reloaded with `FileView.watchChanges`, organized in collapsible sections:
+  - **Sin clasificar** (errored / not yet classified) at the top
+  - **Tareas** / **Ideas** / **Pensamientos**, sorted by priority (`high → low`), then due date, then creation time
+  - **Completadas** (done), collapsed by default
+- Each row shows its priority (colored dot), due date (red when overdue, amber when due within 2 days) and tags.
+- Fixes from the tab itself: click a row's checkbox to toggle `done`, click the type badge to cycle `task → idea → thought` (manual reclassification), and click **Reintentar** on an errored row to retry its LLM classification.
 
 ## Architecture
 
 ```
 capture.qml (Ctrl+Super+G)
       |
-      v append raw line
+      v append raw line (flocked)
 ~/.local/state/caelestia/notes.jsonl   (append-only JSONL, one JSON object per line)
       |
       v PathChanged
 acw-task-notes.path -> acw-task-notes.service (oneshot)
       |
-      v offset-based (no re-processing)
-process_notes.sh -> opencode run -> line rewritten in place (title/type/error)
+      v offset-based (no re-processing), flocked read-modify-write
+process_notes.sh -> one batched `opencode run --pure` call
+                -> lines rewritten in place (title/type/error)
       |
       v
 ~/.config/quickshell/caelestia/modules/dashboard/TaskWidget.qml  (dashboard Tasks tab)
+      |
+      +-- toggle_note.sh  (checkbox: open/done)
+      +-- set_type.sh     (badge click: task/idea/thought)
 ```
+
+All writers of the store (`capture_append.sh`, `process_notes.sh`, `toggle_note.sh`,
+`set_type.sh`) take the same `flock` on `$NOTES_FILE.lock`, so concurrent rewrites
+cannot lose notes.
 
 Record contract (shared by capture, processor and toggle):
 
@@ -44,7 +57,7 @@ Record contract (shared by capture, processor and toggle):
 |---|---|
 | `INSTALL_ROOT` | `~/.config/acw/task-notes` |
 | `NOTES_FILE` | `~/.local/state/caelestia/notes.jsonl` |
-| `MODEL` | `opencode-go/deepseek-v4-flash` |
+| `MODEL` | `opencode-go/muse-spark-1.2-contributor` |
 
 All are overridable per-invocation via the environment (same names).
 
@@ -74,6 +87,25 @@ A note whose classification failed keeps its `error` field and is not retried au
 
 ```
 ~/.config/acw/task-notes/src/process_notes.sh --retry
+```
+
+or click **Reintentar** on the row in the Tasks tab.
+
+## Reclassify existing notes
+
+After a prompt change (or to fix old misclassifications), reprocess every note —
+already-enriched lines included. `id`, `raw`, `status` and `created_at` are
+preserved; on failure the previous fields are kept and only `error` is set:
+
+```
+~/.config/acw/task-notes/src/process_notes.sh --reclassify
+```
+
+A single misclassified note can be fixed from the Tasks tab by clicking its type
+badge, or from a terminal:
+
+```
+~/.config/acw/task-notes/src/set_type.sh <note-id> task
 ```
 
 ## Install / Remove

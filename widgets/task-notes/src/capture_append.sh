@@ -13,6 +13,11 @@ fi
 
 mkdir -p "$(dirname "$NOTES_FILE")"
 
+# Same lock as toggle/set_type/processor: appends must not race with rewrites.
+LOCK_FILE="$NOTES_FILE.lock"
+exec 9>"$LOCK_FILE"
+flock -w 10 9
+
 # python3 builds the JSON so text with quotes/newlines/unicode is escaped safely
 python3 -c '
 import json

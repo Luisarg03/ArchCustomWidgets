@@ -7,6 +7,8 @@ Type=oneshot
 ExecStart=%h/.config/acw/task-notes/src/process_notes.sh
 StandardOutput=journal
 StandardError=journal
+# Batch classification is a single LLM call; allow headroom for large batches.
+TimeoutStartSec=240
 
 [Install]
 WantedBy=default.target
