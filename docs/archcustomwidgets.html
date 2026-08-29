@@ -324,8 +324,8 @@
       <div class="meta-item"><dt>Repository</dt><dd>ArchCustomWidgets</dd></div>
       <div class="meta-item"><dt>Platform</dt><dd>Arch Linux / Hyprland / Wayland</dd></div>
       <div class="meta-item"><dt>Stack</dt><dd>bash + python3 helpers</dd></div>
-      <div class="meta-item"><dt>Version</dt><dd>1.0</dd></div>
-      <div class="meta-item"><dt>Date</dt><dd>2026-08-14</dd></div>
+      <div class="meta-item"><dt>Version</dt><dd>1.1</dd></div>
+      <div class="meta-item"><dt>Date</dt><dd>2026-08-29</dd></div>
     </dl>
   </div>
 
@@ -396,7 +396,8 @@ docs/        # documentation</code></pre>
 │  │  scaffold    │        │  ├── scheme-rotator  ├── wallpaper   │   │
 │  │  install     │        │  ├── waybar-power    ├── vpn-*       │   │
 │  │  update      │        │  ├── waybar-theme    └── qshell-*    │   │
-│  └──────┬───────┘        │  └── clipboard-rofi                 │   │
+│  └──────┬───────┘        │  ├── clipboard-rofi                 │   │
+│         │                │  └── task-notes                     │   │
 │         │                └──────────────┬───────────────────────┘   │
 │         │                               │                           │
 │         ▼                               ▼                           │
@@ -509,7 +510,7 @@ docs/        # documentation</code></pre>
   <section id="unit-catalog">
     <h2>4. Unit Catalog</h2>
 
-    <p>The factory currently ships <strong>7 active units</strong> (3 services, 4 widgets).</p>
+    <p>The factory currently ships <strong>8 active units</strong> (3 services, 5 widgets).</p>
 
     <table>
       <thead>
@@ -570,6 +571,13 @@ docs/        # documentation</code></pre>
           <td>Rofi clipboard picker (cliphist + wl-copy)</td>
           <td><code>~/.config/acw/clipboard-rofi/</code></td>
           <td>Keybind: <code>Super+V</code></td>
+        </tr>
+        <tr>
+          <td><code>widgets/task-notes</code></td>
+          <td>widget</td>
+          <td>Quick note capture (<code>Ctrl+Super+G</code>) + batched LLM classification (title/type/priority/tags/due) + Caelestia Tasks tab (qs -p + .path service)</td>
+          <td><code>~/.config/acw/task-notes/</code> + <code>~/.config/quickshell/caelestia/modules/dashboard/</code> override + systemd <code>acw-task-notes.path</code></td>
+          <td>Keybind: <code>Ctrl+Super+G</code> — wire manually (see <code>docs/keybinds-map.md</code>)</td>
         </tr>
       </tbody>
     </table>
@@ -878,24 +886,20 @@ systemctl is-active  surfshark-connect.service</code></pre>
           <td>Local user data / state files</td>
         </tr>
         <tr>
+          <td><code>**/notes.jsonl</code></td>
+          <td>Local notes store (created at runtime by task-notes)</td>
+        </tr>
+        <tr>
           <td><code>*.bak-*</code></td>
           <td>Backup files created by <code>install.sh</code> during overwrite</td>
         </tr>
         <tr>
-          <td><code>.opencode/node_modules/</code></td>
-          <td>Local tooling dependencies</td>
+          <td><code>.opencode/</code></td>
+          <td>Local opencode tooling + dependencies (entire dir)</td>
         </tr>
         <tr>
-          <td><code>.opencode/package.json</code></td>
-          <td>Local tooling config</td>
-        </tr>
-        <tr>
-          <td><code>.opencode/package-lock.json</code></td>
-          <td>Local tooling lockfile</td>
-        </tr>
-        <tr>
-          <td><code>.opencode/bun.lock</code></td>
-          <td>Local tooling lockfile</td>
+          <td><code>openspec/changes/</code></td>
+          <td>Work-in-progress proposals (local only; canonical specs remain in <code>openspec/specs/</code>)</td>
         </tr>
       </tbody>
     </table>
