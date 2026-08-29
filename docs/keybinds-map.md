@@ -1,6 +1,6 @@
 # Keybind map — hiro03 Hyprland (Caelestia 3.x)
 
-Authoritative map of LIVE keybinds, verified 2026-08-14 via `hyprctl binds` (109 distinct live binds) + config inventory. **Check this file before assigning any new key combo.**
+Authoritative map of LIVE keybinds, verified 2026-08-14 (re-checked 2026-08-29 — no changes) via `hyprctl binds` (109 distinct live binds) + config inventory. **Check this file before assigning any new key combo.** Re-run `hyprctl binds -j | jq` after any Hyprland config change and update the date above.
 
 ## How to read this
 

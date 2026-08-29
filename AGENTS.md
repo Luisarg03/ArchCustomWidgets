@@ -73,15 +73,21 @@ A unit is DONE only when ALL pass:
 - `changes/` holds proposals; review before implementation.
 - The factory scaffolds new units from specs.
 
+## Docs
+
+- `README.md` is the entry point: What it does, Requirements, Quick start, Restore after format, Units table.
+- Every unit `README.md` must have 6 sections: What it does / Prerequisites / Install / Keybinds (or "none") / Config / Remove (+ Troubleshooting when needed). English, consistent tone.
+- `docs/keybinds-map.md` is authoritative — check before assigning any new combo; re-run `hyprctl binds -j` to refresh.
+- `docs/archcustomwidgets.md` is source for `docs/archcustomwidgets.html` (styled cover/print); edit md first.
+
 ## Layout
 
 ```
-factory/     # CLI scripts: scaffold, install, update, validate
+factory/     # CLI scripts: scaffold, install, update, validate + lib.sh
 widgets/     # widget units
 services/    # service units
-shared/      # theme bridge, common libs
-specs/       # openspec specs
-docs/        # documentation
+openspec/    # specs (canonical) + changes/ (local WIP, gitignored)
+docs/        # documentation (md source + html)
 ```
 
 ## Language

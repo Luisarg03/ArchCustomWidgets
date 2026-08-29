@@ -1,24 +1,35 @@
 # scheme-rotator
 
-Rotate Caelestia color schemes sequentially.
+Rotates Caelestia color schemes sequentially.
 
-## Usage
+## What it does
 
-`src/caelestia-auto-theme.sh -n` advances to the next scheme. It cycles through 10 schemes and applies the active one via matugen, notifying with `notify-send`.
+`src/caelestia-auto-theme.sh -n` advances to the next of 10 schemes via `matugen`.
 
-## Keybind (wire manually in hyprland.conf)
+## Prerequisites
 
-Super+Alt T → `~/.config/acw/scheme-rotator/src/caelestia-auto-theme.sh -n`
+`caelestia-cli`, `matugen`, `notify-send` (optional).
 
-## State
-
-The current scheme index lives in `~/.local/state/caelestia-theme-state`.
-
-## Install / Remove
+## Install
 
 ```sh
-./install.sh          # install scripts to ~/.config/acw/scheme-rotator/src
-./install.sh --remove # remove; deletes the install root, leaves no trace
+./install.sh          # copies to ~/.config/acw/scheme-rotator/src
 ```
 
-Install root override: `INSTALL_ROOT=/path ./install.sh`
+## Keybinds
+
+Wire manually. Check `docs/keybinds-map.md`.
+
+```
+bind = SUPER ALT, T, exec, ~/.config/acw/scheme-rotator/src/caelestia-auto-theme.sh -n
+```
+
+## Config
+
+State: `~/.local/state/caelestia-theme-state`. `INSTALL_ROOT` override: `INSTALL_ROOT=/path ./install.sh`.
+
+## Remove
+
+```sh
+./install.sh --remove # deletes install root, leaves no trace
+```

@@ -7,21 +7,27 @@ source "$SCRIPT_DIR/env.conf"
 
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 UNIT="acw-task-notes"
-# Quickshell resolves the active config from <dir>/<name>/shell.qml, so the user
-# dir must shadow the WHOLE shell tree (not just modules/dashboard) to be picked
-# up. D6 accepts this full shadow.
+# ponytail: full tree shadow is intentional (Caelestia quirk) — see D6.
+# Future: copy only modules/dashboard/Content.qml + TaskWidget.qml to avoid freezing upstream.
 QS_SRC_DIR="/etc/xdg/quickshell/caelestia"
 QS_DIR="$HOME/.config/quickshell/caelestia"
 QS_DASH_DIR="$QS_DIR/modules/dashboard"
 
-backup_and_copy() {
-    local src="$1" dst="$2"
-    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-        cp "$dst" "$dst.bak-$(date +%s)"
-        echo "backed up existing: $dst"
-    fi
-    cp "$src" "$dst"
-}
+# ponytail: shared helper — was duplicated 8×, now sourced
+LIB="$SCRIPT_DIR/../../factory/lib.sh"
+if [ -f "$LIB" ]; then
+    # shellcheck source=../../factory/lib.sh
+    source "$LIB"
+else
+    backup_and_copy() {
+        local src="$1" dst="$2"
+        if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
+            cp "$dst" "$dst.bak-$(date +%s)"
+            echo "backed up existing: $dst"
+        fi
+        cp "$src" "$dst"
+    }
+fi
 
 # Idempotent: appends the Tasks tab entry + taskComponent to Content.qml.
 # Skips entirely when taskComponent is already present.
