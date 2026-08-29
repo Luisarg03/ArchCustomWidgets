@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white) ![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white) ![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white) ![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white) ![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white) ![7 units](https://img.shields.io/badge/7_units-0033A1?style=flat-square&logoColor=white)
+![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white) ![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white) ![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white) ![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white) ![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white) ![8 units](https://img.shields.io/badge/8_units-0033A1?style=flat-square&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 </div>
 
@@ -81,32 +81,81 @@ flowchart TD
 | `waybar-power` | widget | Power menu module: lock / power / quit / reboot | |
 | `waybar-theme` | widget | Theme switcher module for waybar | |
 | `clipboard-rofi` | widget | Rofi clipboard manager | Keybind `Super+V` — wire manually |
-| `vpn-surfshark` | service | Surfshark VPN quick-toggle (Caelestia quick-toggles `utilities.vpn`), `surfshark-connect`/`surfshark-disconnect` units | System-level files → sudo install. Known bug: fix reserved in change `fix-vpn-surfshark` |
+| `task-notes` | widget | Quick note capture (`Ctrl+Super+G`) + batched LLM classification (title/type/priority/tags/due) + Caelestia Tasks tab | Needs `quickshell` + `opencode`; see `widgets/task-notes/README.md` |
+| `vpn-surfshark` | service | Surfshark VPN quick-toggle (Caelestia quick-toggles `utilities.vpn`), `surfshark-connect`/`surfshark-disconnect` units | System-level files → sudo install. Needs own `nftables.conf` + `/etc/wireguard/surfshark.conf` |
 | `quickshell-watchdog` | service | Watchdog for quickshell, systemd user unit + timer | |
+
+---
+
+## Requirements
+
+**System:** Arch Linux, Hyprland (Wayland), [Caelestia](https://github.com/caelestia-dots/shell) (HyDE 3.x), `bash 5+`, `python3` + `jsonschema` (`pip install jsonschema` for `factory/validate`), `systemd --user`.
+
+**Per-unit deps** (from `manifest.json` + unit READMEs):
+
+| Unit | Extra deps |
+|---|---|
+| `wallpaper` | `rofi`, `matugen`, `caelestia-cli`, Wallhaven config at `~/.config/wallhaven-wallpaper/config` |
+| `scheme-rotator` | `caelestia-cli` |
+| `waybar-power` | `waybar`, `zenity`, `swaylock`, wallpapers in `/usr/share/backgrounds/Live-wallpaper/` |
+| `waybar-theme` | `waybar` |
+| `clipboard-rofi` | `cliphist`, `wl-clipboard` (`wl-copy`), `rofi` |
+| `task-notes` | `quickshell`, `opencode` (for LLM classification) |
+| `vpn-surfshark` | `wireguard-tools`, `nftables`, `sudo`; user-provided `/etc/wireguard/surfshark.conf` + `src/nftables.conf` (never committed) |
+| `quickshell-watchdog` | `quickshell` |
+
+> Fresh clone note: `services/vpn-surfshark/src/nftables.conf` is gitignored by design (live firewall rules). Provide your own file before installing that unit — `install.sh` will warn and skip nft copy if missing.
 
 ---
 
 ## Quick start
 
 ```bash
-# Validate every unit (widgets/ + services/)
+# Clone (this repo is your backup — keep it)
+git clone https://github.com/Luisarg03/ArchCustomWidgets.git && cd ArchCustomWidgets
+
+# Validate every unit (manifest + bash -n)
 factory/validate
 
-# Install a unit (copies files into ~/.config; idempotent, backs up overwritten files)
-cd <unit>
-./install.sh
+# Install a single unit (copies into ~/.config; idempotent, backs up to .bak-<timestamp>)
+cd widgets/task-notes && ./install.sh
 
 # Uninstall (removes exactly what it installed, leaves no trace)
 ./install.sh --remove
 ```
 
-- System-level units (e.g. `vpn-surfshark`) run some install steps via `sudo` and prompt only for those.
-- Install model is copy, never symlinks. Safe to re-run.
+- Install model is **copy, never symlinks**. Safe to re-run.
+- System-level units (e.g. `vpn-surfshark`) prompt for `sudo` only for `/etc` steps.
+
+### Restore after format / distro hop
+
+This repo is the central backup for all custom widgets/services — that's the point of publishing only the minimum.
+
+```bash
+# 1. Install base: Arch + Hyprland + Caelestia + deps above
+# 2. Restore all units
+git clone https://github.com/Luisarg03/ArchCustomWidgets.git ~/ArchCustomWidgets
+cd ~/ArchCustomWidgets
+factory/validate
+for u in widgets/* services/*; do echo "==> $u"; (cd "$u" && ./install.sh); done
+
+# 3. Wire keybinds manually (never auto-applied — see docs/keybinds-map.md)
+#    e.g. Ctrl+Super+G for task-notes, Super+V for clipboard, etc.
+#    Edit ~/.config/hypr/custom/keybinds.conf
+
+# 4. Reload shell
+qs -c caelestia   # or Ctrl+Super+R
+systemctl --user daemon-reload
+```
+
+Keybinds are **never auto-applied** — add them yourself per each unit's README. Check [`docs/keybinds-map.md`](docs/keybinds-map.md) first (109 live binds, verified via `hyprctl binds`) to avoid collisions.
 
 ---
 
 ## Contract & docs
 
 - [`AGENTS.md`](AGENTS.md) — unit contract + "done means 100% functional" validation checklist.
-- `docs/archcustomwidgets.html` — full technical documentation (single-file, PDF-ready).
-- `openspec/` — spec-driven lifecycle (specs, changes, archive). Active change: `fix-vpn-surfshark`.
+- [`docs/archcustomwidgets.html`](docs/archcustomwidgets.html) — full technical documentation (single-file, PDF-ready).
+- [`docs/keybinds-map.md`](docs/keybinds-map.md) — authoritative live keybind map (check before adding any new combo).
+- [`openspec/specs/`](openspec/specs/) — canonical unit specs (spec-driven factory); WIP changes live locally under `openspec/changes/` (gitignored).
+- License: [MIT](LICENSE).
