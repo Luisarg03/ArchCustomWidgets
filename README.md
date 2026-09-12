@@ -155,7 +155,7 @@ Keybinds are **never auto-applied** — add them yourself per each unit's README
 ## Contract & docs
 
 - [`AGENTS.md`](AGENTS.md) — unit contract + "done means 100% functional" validation checklist.
-- [`docs/archcustomwidgets.html`](docs/archcustomwidgets.html) — full technical documentation (single-file, PDF-ready).
+- [`docs/archcustomwidgets.md`](docs/archcustomwidgets.md) — full technical documentation.
 - [`docs/keybinds-map.md`](docs/keybinds-map.md) — authoritative live keybind map (check before adding any new combo).
 - [`openspec/specs/`](openspec/specs/) — canonical unit specs (spec-driven factory); WIP changes live locally under `openspec/changes/` (gitignored).
 - License: [MIT](LICENSE).
