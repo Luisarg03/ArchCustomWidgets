@@ -8,19 +8,9 @@ UNIT_NAME="waybar-theme"
 
 # shellcheck source=env.conf
 source "$SCRIPT_DIR/env.conf"
+# shellcheck source=../../factory/lib.sh
+source "$SCRIPT_DIR/../../factory/lib.sh"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.config/acw/waybar-theme}"
-
-# Copy a file, backing up an existing different destination first.
-copy_with_backup() {
-    local src="$1" dst="$2"
-    if [[ -e "$dst" ]] && ! cmp -s "$src" "$dst"; then
-        local ts
-        ts="$(date +%s)"
-        cp "$dst" "$dst.bak-$ts"
-        echo "  backed up $dst -> $dst.bak-$ts"
-    fi
-    cp "$src" "$dst"
-}
 
 install_files() {
     echo "Installing $UNIT_NAME -> $INSTALL_ROOT"
@@ -29,11 +19,11 @@ install_files() {
     local f
     for f in "$SCRIPT_DIR"/src/*; do
         [[ -f "$f" ]] || continue
-        copy_with_backup "$f" "$INSTALL_ROOT/src/$(basename "$f")"
+        backup_and_copy "$f" "$INSTALL_ROOT/src/$(basename "$f")"
     done
     for f in "$SCRIPT_DIR"/styles/*; do
         [[ -f "$f" ]] || continue
-        copy_with_backup "$f" "$INSTALL_ROOT/styles/$(basename "$f")"
+        backup_and_copy "$f" "$INSTALL_ROOT/styles/$(basename "$f")"
     done
 
     chmod +x "$INSTALL_ROOT"/src/*.sh

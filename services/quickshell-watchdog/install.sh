@@ -15,29 +15,22 @@ USER_UNITS_DIR="$HOME/.config/systemd/user"
 info() { echo "==> $*"; }
 warn() { echo "WARN: $*"; }
 
-copy_with_backup() {
-    # Copy src -> dst; back up dst first when it exists and differs.
-    local src="$1" dst="$2"
-    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-        cp "$dst" "$dst.bak-$(date +%s)"
-        info "Backed up $dst"
-    fi
-    cp "$src" "$dst"
-}
+# shellcheck source=../../factory/lib.sh
+source "$SCRIPT_DIR/../../factory/lib.sh"
 
 install() {
     info "Copying unit files to $INSTALL_ROOT/src"
     mkdir -p "$INSTALL_ROOT/src"
     for f in "$SCRIPT_DIR"/src/*; do
         [ -f "$f" ] || continue
-        copy_with_backup "$f" "$INSTALL_ROOT/src/$(basename "$f")"
+        backup_and_copy "$f" "$INSTALL_ROOT/src/$(basename "$f")"
     done
     chmod +x "$INSTALL_ROOT/src/caelestia-watchdog.sh"
 
     info "Installing systemd user units"
     mkdir -p "$USER_UNITS_DIR"
-    copy_with_backup "$SCRIPT_DIR/src/$SERVICE" "$USER_UNITS_DIR/$SERVICE"
-    copy_with_backup "$SCRIPT_DIR/src/$TIMER" "$USER_UNITS_DIR/$TIMER"
+    backup_and_copy "$SCRIPT_DIR/src/$SERVICE" "$USER_UNITS_DIR/$SERVICE"
+    backup_and_copy "$SCRIPT_DIR/src/$TIMER" "$USER_UNITS_DIR/$TIMER"
 
     systemctl --user daemon-reload
     systemctl --user enable --now "$TIMER"
