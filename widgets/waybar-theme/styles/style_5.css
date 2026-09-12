@@ -1,31 +1,23 @@
-/* ponytail: shares base.css — next refactor to @import + vars */
+@import "styles/base.css";
 /*style_5*/
 
-* {
-    border: none;
-    border-radius: 0;
-    font-family: "Font Awesome 5 Free", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    min-height: 0;
-}
+/* ponytail: shared layout lives in base.css; this file only carries per-style values. */
 
 window#waybar {
-    background: #f9f5f1; 
-    color: #3f3f3f;     
+    background: #f9f5f1;
+    color: #3f3f3f;
 }
 
-/* Tooltip */
 tooltip {
-     border-radius: 10px;
-     background-color: #ede6de;
-     border: 1px solid #d5a6a6;
+    border-radius: 10px;
+    background-color: #ede6de;
+    border: 1px solid #d5a6a6;
 }
 
 tooltip label {
     color: #3f3f3f;
 }
 
-/* Modules: Base Style */
 #clock,
 #custom-countdown,
 #custom-todo,
@@ -40,14 +32,13 @@ tooltip label {
 #custom-quit,
 #custom-lock,
 #custom-launcher {
-    background: #ede6de; 
+    background: #ede6de;
     padding: 3px 13px;
     margin: 4px;
     border-radius: 8px;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Modules: App Launcher Strip */
 #custom-chrome,
 #custom-terminal,
 #custom-code,
@@ -68,11 +59,9 @@ tooltip label {
 }
 
 #custom-thunar {
-    margin-right: 4px;
     border-radius: 0 8px 8px 0;
 }
 
-/* Modules: Hover Effects */
 #custom-launcher:hover,
 #clock:hover,
 #custom-countdown:hover,
@@ -92,17 +81,16 @@ tooltip label {
 #custom-reboot:hover,
 #custom-quit:hover,
 #custom-lock:hover {
-    background: #d5a6a6; 
+    background: #d5a6a6;
     color: #ffffff;
 }
 
 #custom-power:hover {
-    background: #b13b56; 
+    background: #b13b56;
 }
 
-/* Modules: Specific Styles */
 #tray {
-    background: #5a5450; 
+    background: #5a5450;
     color: #f9f5f1;
     padding: 3px 13px;
     margin: 4px;
@@ -125,14 +113,9 @@ tooltip label {
     font-weight: bold;
 }
 
-#keyboard-state {
-    background: transparent;
-}
-
 #keyboard-state label.locked {
     background: #d5a6a6;
     color: #ffffff;
-    padding: 0px 12px;
     margin: 4px 0px;
     border-radius: 8px;
 }
@@ -145,7 +128,6 @@ tooltip label {
 }
 
 #taskbar button {
-    background: transparent;
     padding: 0 8px;
     border-bottom: 3px solid transparent;
     transition: border-bottom-color 0.3s ease-out;
