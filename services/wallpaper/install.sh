@@ -4,18 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=env.conf
 source "$SCRIPT_DIR/env.conf"
+# shellcheck source=../../factory/lib.sh
+source "$SCRIPT_DIR/../../factory/lib.sh"
 
 SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 PATH_UNIT="acw-wallpaper-theme"
-
-backup_and_copy() {
-    local src="$1" dst="$2"
-    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-        cp "$dst" "$dst.bak-$(date +%s)"
-        echo "backed up existing: $dst"
-    fi
-    cp "$src" "$dst"
-}
 
 install() {
     mkdir -p "$INSTALL_ROOT/src"

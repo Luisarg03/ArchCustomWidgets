@@ -15,32 +15,15 @@ SHELL_JSON="$HOME/.config/caelestia/shell.json"
 info() { echo "==> $*"; }
 warn() { echo "WARN: $*"; }
 
-copy_with_backup() {
-    # Copy src -> dst; back up dst first when it exists and differs.
-    local src="$1" dst="$2"
-    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-        cp "$dst" "$dst.bak-$(date +%s)"
-        info "Backed up $dst"
-    fi
-    cp "$src" "$dst"
-}
-
-sudo_copy_with_backup() {
-    # sudo variant of copy_with_backup.
-    local src="$1" dst="$2"
-    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-        sudo cp "$dst" "$dst.bak-$(date +%s)"
-        info "Backed up $dst (sudo)"
-    fi
-    sudo cp "$src" "$dst"
-}
+# shellcheck source=../../factory/lib.sh
+source "$SCRIPT_DIR/../../factory/lib.sh"
 
 install() {
     info "Copying unit files to $INSTALL_ROOT/src"
     mkdir -p "$INSTALL_ROOT/src"
     for f in "$SCRIPT_DIR"/src/*; do
         [ -f "$f" ] || continue
-        copy_with_backup "$f" "$INSTALL_ROOT/src/$(basename "$f")"
+        backup_and_copy "$f" "$INSTALL_ROOT/src/$(basename "$f")"
     done
 
     info "Patching Caelestia shell.json (VPN quick-toggle + provider)"

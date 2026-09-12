@@ -13,21 +13,8 @@ QS_SRC_DIR="/etc/xdg/quickshell/caelestia"
 QS_DIR="$HOME/.config/quickshell/caelestia"
 QS_DASH_DIR="$QS_DIR/modules/dashboard"
 
-# ponytail: shared helper — was duplicated 8×, now sourced
-LIB="$SCRIPT_DIR/../../factory/lib.sh"
-if [ -f "$LIB" ]; then
-    # shellcheck source=../../factory/lib.sh
-    source "$LIB"
-else
-    backup_and_copy() {
-        local src="$1" dst="$2"
-        if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-            cp "$dst" "$dst.bak-$(date +%s)"
-            echo "backed up existing: $dst"
-        fi
-        cp "$src" "$dst"
-    }
-fi
+# shellcheck source=../../factory/lib.sh
+source "$SCRIPT_DIR/../../factory/lib.sh"
 
 # Idempotent: appends the Tasks tab entry + taskComponent to Content.qml.
 # Skips entirely when taskComponent is already present.
