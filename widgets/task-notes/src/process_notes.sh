@@ -21,7 +21,7 @@ if [ -f "$INSTALL_ROOT/env.conf" ]; then
     . "$INSTALL_ROOT/env.conf"
 fi
 NOTES_FILE="${NOTES_FILE:-$HOME/.local/state/caelestia/notes.jsonl}"
-MODEL="${MODEL:-opencode-go/muse-spark-1.2-contributor}"
+MODEL="${MODEL:-opencode/muse-spark-1.2-contributor-free}"
 STATE_FILE="$INSTALL_ROOT/.state"
 
 # systemd user units run with a minimal PATH; opencode usually lives in ~/.opencode/bin.
@@ -56,6 +56,7 @@ python3 - "$NOTES_FILE" "$STATE_FILE" "$MODEL" "$OFFSET" "$RETRY" "$RECLASSIFY" 
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -189,10 +190,13 @@ def classify_batch(items):
             results[it["id"]] = (None, "opencode timeout (%ds)" % timeout)
         return results
     if proc.returncode != 0:
+        # opencode pretty-prints its errors over several ANSI-coloured lines, so
+        # taking the last line yields a lone "}". Collapse it into something the
+        # note (and the dashboard chip) can actually show.
+        flat = " ".join(re.sub(r"\x1b\[[0-9;]*m", "", proc.stderr or "").split())
         msg = "opencode failed"
-        err = (proc.stderr or "").strip().splitlines()
-        if err:
-            msg += ": " + err[-1][:60]
+        if flat:
+            msg += ": " + flat[:140]
         for it in items:
             results[it["id"]] = (None, msg)
         return results

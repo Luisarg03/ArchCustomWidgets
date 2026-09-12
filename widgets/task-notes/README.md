@@ -56,9 +56,14 @@ Record contract (shared by capture, processor and toggle):
 |---|---|
 | `INSTALL_ROOT` | `~/.config/acw/task-notes` |
 | `NOTES_FILE` | `~/.local/state/caelestia/notes.jsonl` |
-| `MODEL` | `opencode-go/muse-spark-1.2-contributor` |
+| `MODEL` | `opencode/muse-spark-1.2-contributor-free` |
 
 All are overridable per-invocation via the environment (same names).
+
+`MODEL` must be an id printed by `opencode models` — the provider prefix has to
+match exactly (`opencode/muse-spark-1.2-contributor-free`, not
+`opencode-go/...`). An unknown model makes every classification fail and the
+notes land in **Sin clasificar** with a retry chip.
 
 ## Keybind (wire manually in ~/.config/hypr/custom/keybinds.conf)
 
