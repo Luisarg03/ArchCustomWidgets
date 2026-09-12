@@ -10,13 +10,13 @@ WireGuard + nftables kill switch.
 | `src/surfshark-connect.service` | `/etc/systemd/system/` | `wg-quick up surfshark` + nft output kill-switch rules |
 | `src/surfshark-disconnect.service` | `/etc/systemd/system/` | restore `/etc/nftables.conf` + `wg-quick down surfshark` |
 | `src/nftables.conf` | `/etc/nftables.conf` | system nft config (explicit `output` chain for the kill switch) |
-| `src/patch-shell.py` | authored | idempotent shell.json delta (VPN quick-toggle + provider) |
+| `src/patch-shell.sh` | authored | idempotent shell.json delta (VPN quick-toggle + provider) |
 
 ## Prerequisites
 
 - `/etc/wireguard/surfshark.conf` must exist. `wg-quick up surfshark` reads it;
   without it the connect unit fails. It is **not** shipped (contains secrets).
-- Packages: `wireguard-tools`, `nftables` (and the `surfshark` wg config set).
+- Packages: `wireguard-tools`, `nftables`, `jq` (and the `surfshark` wg config set).
 
 ## Install
 
@@ -28,10 +28,11 @@ What it does, in order:
 
 1. Copies `src/*` to `$INSTALL_ROOT/src` (`~/.config/acw/vpn-surfshark` by
    default). Existing differing targets get a `.bak-<timestamp>` first.
-2. Runs `patch-shell.py`: ensures `utilities.quickToggles` contains
+2. Runs `patch-shell.sh`: ensures `utilities.quickToggles` contains
    `{"enabled": true, "id": "vpn"}` and `utilities.vpn` has the Surfshark
    WireGuard provider block. `shell.json` is backed up to
-   `shell.json.bak-<timestamp>` before the first write. Never overwrites a
+   `shell.json.bak-<timestamp>` before the first write, and nothing is written
+   at all when the file is already in the expected state. Never overwrites a
    provider block the user has changed.
 3. sudo steps (password prompt once):
    - copies both `.service` units to `/etc/systemd/system/` (backup rule),
@@ -53,7 +54,7 @@ The Caelestia quick-toggle `vpn` reads `utilities.vpn` and runs
 ./install.sh --remove
 ```
 
-- Reverts shell.json via `patch-shell.py --remove` (only removes entries that
+- Reverts shell.json via `patch-shell.sh --remove` (only removes entries that
   exactly match this unit's values; user-modified entries are left and reported).
 - Removes both units from `/etc/systemd/system/`, restores `/etc/nftables.conf`
   from the newest `.bak-*` (or removes it with a warning if no backup exists),

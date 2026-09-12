@@ -101,7 +101,7 @@ flowchart TD
 | `waybar-theme` | `waybar` |
 | `clipboard-rofi` | `cliphist`, `wl-clipboard` (`wl-copy`), `rofi` |
 | `task-notes` | `quickshell`, `opencode` (for LLM classification) |
-| `vpn-surfshark` | `wireguard-tools`, `nftables`, `sudo`; user-provided `/etc/wireguard/surfshark.conf` + `src/nftables.conf` (never committed) |
+| `vpn-surfshark` | `wireguard-tools`, `nftables`, `jq`, `sudo`; user-provided `/etc/wireguard/surfshark.conf` + `src/nftables.conf` (never committed) |
 | `quickshell-watchdog` | `quickshell` |
 
 > Fresh clone note: `services/vpn-surfshark/src/nftables.conf` is gitignored by design (live firewall rules). Provide your own file before installing that unit — `install.sh` will warn and skip nft copy if missing.

@@ -28,7 +28,7 @@ install() {
 
     info "Patching Caelestia shell.json (VPN quick-toggle + provider)"
     if [ -f "$SHELL_JSON" ]; then
-        python3 "$INSTALL_ROOT/src/patch-shell.py"
+        bash "$INSTALL_ROOT/src/patch-shell.sh"
     else
         warn "shell.json not found at $SHELL_JSON; skipping shell.json patch"
     fi
@@ -56,10 +56,10 @@ install() {
 
 remove() {
     info "Reverting shell.json delta"
-    if [ -f "$INSTALL_ROOT/src/patch-shell.py" ]; then
-        python3 "$INSTALL_ROOT/src/patch-shell.py" --remove
+    if [ -f "$INSTALL_ROOT/src/patch-shell.sh" ]; then
+        bash "$INSTALL_ROOT/src/patch-shell.sh" --remove
     else
-        warn "patch-shell.py not found at $INSTALL_ROOT; skipping shell.json revert"
+        warn "patch-shell.sh not found at $INSTALL_ROOT; skipping shell.json revert"
     fi
 
     info "Removing system-level units (sudo)"

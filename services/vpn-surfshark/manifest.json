@@ -3,6 +3,6 @@
   "type": "service",
   "description": "Surfshark VPN via Caelestia quick-toggles button: shell.json delta + system-level wireguard/nft units (wg-quick up + nft kill-switch)",
   "stack": "bash",
-  "entrypoint": "src/patch-shell.py",
-  "deps": ["wireguard-tools", "nftables", "surfshark"]
+  "entrypoint": "src/patch-shell.sh",
+  "deps": ["wireguard-tools", "nftables", "surfshark", "jq"]
 }
