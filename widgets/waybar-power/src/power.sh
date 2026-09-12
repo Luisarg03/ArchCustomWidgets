@@ -1,87 +1,47 @@
 #!/bin/bash
+# Power actions for the waybar modules, each behind a zenity confirmation.
+#
+#   power.sh --shutdown    confirm, then systemctl poweroff
+#   power.sh --reboot      confirm, then systemctl reboot
+#   power.sh --logout      confirm, then exit the Hyprland session
+set -euo pipefail
 
-# --- Configuration ---
-SHUTDOWN_CMD="systemctl poweroff"
-REBOOT_CMD="systemctl reboot"
-LOGOUT_CMD="labwc --exit"  #modify this command based on your DE
+SHUTDOWN_CMD=(systemctl poweroff)
+REBOOT_CMD=(systemctl reboot)
+LOGOUT_CMD=(hyprctl dispatch exit)
 
-# --- Function to Check Dependencies ---
-check_dependencies() {
-    if ! command -v zenity &> /dev/null; then
-        echo "Error: zenity is not installed. Please install it."
-        notify-send "Error: zenity is not installed. Please install it."
-        exit 1
-    fi
-}
-
-# Function for Shutdown Confirmation Window
-do_shutdown() {
-    zenity --question \
-        --title="System Shutdown Confirmation" \
-        --text="Are you sure you want to SHUTDOWN the system?" \
-        --ok-label="Shutdown" \
-        --cancel-label="Cancel"
-
-    if [ $? -eq 0 ]; then
-        echo "Shutting down the system..."
-        $SHUTDOWN_CMD
+# Ask for confirmation, then run the command. $1 title, $2 text, $3 ok label.
+confirm() {
+    if zenity --question --title="$1" --text="$2" --ok-label="$3" --cancel-label="Cancel"; then
+        shift 3
+        echo "Running: $*"
+        "$@"
     else
-        echo "Shutdown cancelled."
+        echo "Cancelled."
     fi
 }
 
-# Function for Reboot Confirmation Window
-do_reboot() {
-    zenity --question \
-        --title="System Reboot Confirmation" \
-        --text="Are you sure you want to REBOOT the system?" \
-        --ok-label="Reboot" \
-        --cancel-label="Cancel"
+if ! command -v zenity &> /dev/null; then
+    echo "Error: zenity is not installed. Please install it." >&2
+    notify-send "Error: zenity is not installed. Please install it." 2>/dev/null || true
+    exit 1
+fi
 
-    if [ $? -eq 0 ]; then
-        echo "Rebooting the system..."
-        $REBOOT_CMD
-    else
-        echo "Reboot cancelled."
-    fi
-}
-
-# Function for exiting session
-do_logout() {
-    zenity --question \
-        --title="Session Logout Confirmation" \
-        --text="Do you want to exit session?" \
-        --ok-label="Exit" \
-        --cancel-label="Cancel"
-
-    if [ $? -eq 0 ]; then
-        echo "Exiting labwc session..."
-        $LOGOUT_CMD
-    else
-        echo "Session not exit."
-    fi
-}
-
-# --- Main Script Execution ---
-
-check_dependencies
-
-case "$1" in
+case "${1:-}" in
     --shutdown)
-        do_shutdown
+        confirm "System Shutdown Confirmation" \
+            "Are you sure you want to SHUTDOWN the system?" "Shutdown" "${SHUTDOWN_CMD[@]}"
         ;;
     --reboot)
-        do_reboot
+        confirm "System Reboot Confirmation" \
+            "Are you sure you want to REBOOT the system?" "Reboot" "${REBOOT_CMD[@]}"
         ;;
     --logout)
-        do_logout
-        ;;    
+        confirm "Session Logout Confirmation" \
+            "Do you want to exit session?" "Exit" "${LOGOUT_CMD[@]}"
+        ;;
     *)
-        echo "Usage: $0 {--shutdown | --reboot | --logout}"
-        echo
-        echo "Example: $0 --shutdown"
+        echo "Usage: $0 {--shutdown | --reboot | --logout}" >&2
         exit 1
         ;;
 esac
-
-exit 0
