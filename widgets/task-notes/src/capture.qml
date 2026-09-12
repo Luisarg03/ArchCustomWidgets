@@ -38,6 +38,11 @@ ApplicationWindow {
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
 
+    // root.close() hides the window but leaves the `qs -p` process alive: every
+    // capture used to strand a ~350 MB process (and those stray `qs` processes
+    // then fooled the quickshell watchdog into thinking the shell was up).
+    onClosing: Qt.quit()
+
     // Focus timer — wait for window to be active before stealing focus
     Timer {
         id: focusTimer
