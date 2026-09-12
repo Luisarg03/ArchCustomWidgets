@@ -41,6 +41,23 @@ itself operates on the **live** `~/.config/waybar/styles/` directory (paths are
 hardcoded at the top of `src/theme.sh`) — it reads `style_N.css` files from
 there and writes `~/.config/waybar/style.css`.
 
+### base.css
+
+`styles/base.css` holds the layout that all 11 styles declare identically; each
+`style_N.css` starts with `@import "styles/base.css";` and carries only its own
+values (palette, radii, transitions). Because the import resolves relative to
+the stylesheet waybar loads, **`base.css` must exist next to the other style
+files**:
+
+```
+~/.config/waybar/styles/base.css      <- required by every style_N.css
+~/.config/waybar/styles/style_1.css   <- @import + per-style values
+~/.config/waybar/style.css            <- copy of the active style
+```
+
+A style file on its own (without `base.css` beside it) renders unstyled, so
+always copy the whole `styles/` directory, never a single file.
+
 If the live styles have changed since packaging (new look, added or removed
 style files):
 
@@ -48,8 +65,11 @@ style files):
   `~/.config/waybar/styles/`.
 - To refresh the bundled reference set, copy the live styles back:
   ```bash
-  cp ~/.config/waybar/styles/style_*.css <repo>/widgets/waybar-theme/styles/
+  cp ~/.config/waybar/styles/*.css <repo>/widgets/waybar-theme/styles/
   ```
+  Then re-check what is genuinely shared: a declaration only belongs in
+  `base.css` when every style resolves it to the same value, otherwise the
+  style file must keep it.
 - To use a different set of styles, edit the `STYLES=(...)` list and the
   paths at the top of `src/theme.sh`.
 
