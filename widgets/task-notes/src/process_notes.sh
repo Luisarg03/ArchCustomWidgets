@@ -46,17 +46,13 @@ if [ -f "$STATE_FILE" ]; then
     OFFSET="$(cat "$STATE_FILE")"
 fi
 
-# Serialize every read-modify-write of the store (capture, toggle, set_type and
-# this processor share the same lock) so concurrent rewrites cannot lose notes.
+# Serialize every read-modify-write of the store (capture, edit_note and this
+# processor share the same lock) so concurrent rewrites cannot lose notes.
 LOCK_FILE="$NOTES_FILE.lock"
 exec 9>"$LOCK_FILE"
 flock -w 15 9
 
-export ACW_NOTES_FILE="$NOTES_FILE" ACW_STATE_FILE="$STATE_FILE" \
-       ACW_OFFSET="$OFFSET" ACW_MODEL="$MODEL" ACW_RETRY="$RETRY" \
-       ACW_RECLASSIFY="$RECLASSIFY"
-
-python3 - <<'PY'
+python3 - "$NOTES_FILE" "$STATE_FILE" "$MODEL" "$OFFSET" "$RETRY" "$RECLASSIFY" <<'PY'
 import datetime
 import json
 import os
@@ -64,12 +60,10 @@ import subprocess
 import sys
 import tempfile
 
-NOTES_FILE = os.environ["ACW_NOTES_FILE"]
-STATE_FILE = os.environ["ACW_STATE_FILE"]
-MODEL = os.environ["ACW_MODEL"]
-OFFSET = int(os.environ["ACW_OFFSET"])
-RETRY = os.environ["ACW_RETRY"] == "1"
-RECLASSIFY = os.environ["ACW_RECLASSIFY"] == "1"
+NOTES_FILE, STATE_FILE, MODEL = sys.argv[1], sys.argv[2], sys.argv[3]
+OFFSET = int(sys.argv[4])
+RETRY = sys.argv[5] == "1"
+RECLASSIFY = sys.argv[6] == "1"
 
 VALID_TYPES = {"task", "idea", "thought"}
 VALID_PRIORITIES = {"low", "medium", "high"}
@@ -100,6 +94,7 @@ PROMPT = (
     'to consider later ("que pasaria si", "idea:", "podriamos"); thought = an '
     "observation or note with no action implied. Prefer task when the note "
     "implies doing something.\n"
+    "Important: the output MUST use the exact lowercase English tokens for the \"type\" field: 'task', 'idea', or 'thought'. Do NOT translate these tokens or substitute synonyms; follow them literally.\n"
     'Due rules: set a date ONLY when the note explicitly mentions a date, day '
     'of the week or deadline ("manana", "viernes", "antes del 20", "2026-08-30"). '
     "Otherwise null. Never guess or invent dates.\n"
@@ -145,11 +140,14 @@ def clean_due(due):
 def validate_fields(entry):
     """Validate one LLM entry. Returns (fields dict, None) or (None, error_msg)."""
     title = entry.get("title")
-    ntype = entry.get("type")
+    # Tolerate casing and stray whitespace only: the prompt already demands the
+    # exact tokens, and anything else becomes an error the UI can retry.
+    raw_type = entry.get("type")
+    ntype = raw_type.strip().lower() if isinstance(raw_type, str) else None
     if not isinstance(title, str) or not title.strip():
         return None, "missing title"
     if ntype not in VALID_TYPES:
-        return None, "invalid type: %s" % (ntype,)
+        return None, "invalid type: %s" % (raw_type,)
     words = title.strip().split()
     if len(words) > 8:
         title = " ".join(words[:8])

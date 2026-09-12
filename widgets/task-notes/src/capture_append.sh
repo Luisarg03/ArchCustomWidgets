@@ -13,7 +13,7 @@ fi
 
 mkdir -p "$(dirname "$NOTES_FILE")"
 
-# Same lock as toggle/set_type/processor: appends must not race with rewrites.
+# Same lock as edit_note/processor: appends must not race with rewrites.
 LOCK_FILE="$NOTES_FILE.lock"
 exec 9>"$LOCK_FILE"
 flock -w 10 9

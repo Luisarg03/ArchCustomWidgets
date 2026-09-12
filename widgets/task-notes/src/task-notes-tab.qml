@@ -397,8 +397,9 @@ Item {
                         // ponytail: absolute path — Qt.resolvedUrl resolves relative to QML file,
                         // but installed QML lives in a different dir than the script.
                         Quickshell.execDetached([
-                            Paths.home + "/.config/acw/task-notes/src/toggle_note.sh",
-                            row.modelData.id
+                            Paths.home + "/.config/acw/task-notes/src/edit_note.sh",
+                            row.modelData.id,
+                            "status"
                         ]);
                         refreshTimer.start();
                     }
@@ -506,8 +507,9 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         Quickshell.execDetached([
-                            Paths.home + "/.config/acw/task-notes/src/set_type.sh",
+                            Paths.home + "/.config/acw/task-notes/src/edit_note.sh",
                             row.modelData.id,
+                            "type",
                             row.cycleType()
                         ]);
                         refreshTimer.start();

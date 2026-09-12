@@ -31,13 +31,12 @@ process_notes.sh -> one batched `opencode run --pure` call
       v
 ~/.config/quickshell/caelestia/modules/dashboard/TaskWidget.qml  (dashboard Tasks tab)
       |
-      +-- toggle_note.sh  (checkbox: open/done)
-      +-- set_type.sh     (badge click: task/idea/thought)
+      +-- edit_note.sh    (checkbox: toggle status, badge: set type)
 ```
 
-All writers of the store (`capture_append.sh`, `process_notes.sh`, `toggle_note.sh`,
-`set_type.sh`) take the same `flock` on `$NOTES_FILE.lock`, so concurrent rewrites
-cannot lose notes.
+All writers of the store (`capture_append.sh`, `process_notes.sh`,
+`edit_note.sh`) take the same `flock` on `$NOTES_FILE.lock`, so concurrent
+rewrites cannot lose notes.
 
 Record contract (shared by capture, processor and toggle):
 
@@ -45,7 +44,7 @@ Record contract (shared by capture, processor and toggle):
 {"id":"a1b2c3","raw":"texto crudo original","title":"Titulo corto","type":"task","priority":"medium","tags":["config","hyprland"],"due":"2026-08-20","status":"open","created_at":"2026-08-14T17:20:00","error":null}
 ```
 
-- `raw` always present; `title`/`type`/`priority`/`tags`/`due` added by the processor; `error` set (string) only when classification failed; `status` toggled `open`/`done` by `toggle_note.sh`.
+- `raw` always present; `title`/`type`/`priority`/`tags`/`due` added by the processor; `error` set (string) only when classification failed; `status` toggled `open`/`done` by `edit_note.sh`.
 - `title`: short title, max 8 words. `type`: `task | idea | thought`. `priority`: `low | medium | high` (default `medium` if the LLM omits it). `tags`: array of 2-4 lowercase keywords (may be `[]`). `due`: ISO-8601 date `YYYY-MM-DD` or `null` — set only when the note implies a deadline.
 - The processor rewrites lines **in place** (same line count); its progress lives in `$INSTALL_ROOT/.state` (a line offset), so the re-trigger caused by its own rewrite is a no-op.
 
@@ -105,7 +104,7 @@ A single misclassified note can be fixed from the Tasks tab by clicking its type
 badge, or from a terminal:
 
 ```
-~/.config/acw/task-notes/src/set_type.sh <note-id> task
+~/.config/acw/task-notes/src/edit_note.sh <note-id> type task
 ```
 
 ## Install / Remove

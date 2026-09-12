@@ -95,17 +95,6 @@ ApplicationWindow {
         border.color: root.colOutline
         border.width: 1
 
-        // Subtle shadow via layered rectangle (no DropShadow dependency)
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: -1
-            radius: parent.radius + 1
-            color: "transparent"
-            border.color: Qt.rgba(0, 0, 0, 0.15)
-            border.width: 1
-            z: -1
-        }
-
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 20
@@ -218,18 +207,6 @@ ApplicationWindow {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.submit()
-                    }
-
-                    // Keyboard shortcut hint
-                    Text {
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.rightMargin: 6
-                        visible: false
-                        text: "⏎"
-                        color: root.colOnPrimary
-                        font.pixelSize: 14
-                        opacity: 0.6
                     }
                 }
             }
