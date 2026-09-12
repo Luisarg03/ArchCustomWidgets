@@ -89,7 +89,7 @@ flowchart TD
 
 ## Requirements
 
-**System:** Arch Linux, Hyprland (Wayland), [Caelestia](https://github.com/caelestia-dots/shell) (HyDE 3.x), `bash 5+`, `python3` + `jsonschema` (`pip install jsonschema` for `factory/validate`), `systemd --user`.
+**System:** Arch Linux, Hyprland (Wayland), [Caelestia](https://github.com/caelestia-dots/shell) (HyDE 3.x), `bash 5+`, `python3` (stdlib only), `systemd --user`.
 
 **Per-unit deps** (from `manifest.json` + unit READMEs):
 
