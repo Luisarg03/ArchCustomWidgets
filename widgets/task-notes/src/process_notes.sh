@@ -21,7 +21,7 @@ if [ -f "$INSTALL_ROOT/env.conf" ]; then
     . "$INSTALL_ROOT/env.conf"
 fi
 NOTES_FILE="${NOTES_FILE:-$HOME/.local/state/caelestia/notes.jsonl}"
-MODEL="${MODEL:-opencode-go/deepseek-v4-flash}"
+MODEL="${MODEL:-opencode-go/muse-spark-1.2-contributor}"
 STATE_FILE="$INSTALL_ROOT/.state"
 
 # systemd user units run with a minimal PATH; opencode usually lives in ~/.opencode/bin.
