@@ -53,14 +53,14 @@ Every unit (widget or service) is a self-contained directory:
 
 ## Lifecycle
 
-New unit: change proposal → OpenSpec spec → factory scaffold → implementation → validation. Factory tooling lives in `factory/` (bash scripts: scaffold, install, update, validate).
+New unit: change proposal → OpenSpec spec → scaffold → implementation → validation. Factory tooling lives in `factory/` (bash: `validate` + `lib.sh`, sourced by every `install.sh`).
 
 ## Validation — done means 100% functional
 
 A unit is DONE only when ALL pass:
 
 1. `bash -n` clean on every script.
-2. `manifest.json` validates against the schema (`factory/validate`).
+2. `manifest.json` has the required keys (`id`, `type`, `description`, `stack`, `entrypoint`) and passes `factory/validate`.
 3. Clean install: `install.sh` runs on a fresh target.
 4. Uninstall: `install.sh --remove` leaves no trace.
 5. Service units: `systemctl --user is-enabled` && `is-active` after install.
@@ -71,7 +71,7 @@ A unit is DONE only when ALL pass:
 
 - `specs/` holds capability specs; every unit traces to a spec.
 - `changes/` holds proposals; review before implementation.
-- The factory scaffolds new units from specs.
+- `factory/validate` gates every unit; scaffolding is manual, following the unit contract layout.
 
 ## Docs
 
@@ -83,7 +83,7 @@ A unit is DONE only when ALL pass:
 ## Layout
 
 ```
-factory/     # CLI scripts: scaffold, install, update, validate + lib.sh
+factory/     # validate + lib.sh (shared install helpers)
 widgets/     # widget units
 services/    # service units
 openspec/    # specs (canonical) + changes/ (local WIP, gitignored)

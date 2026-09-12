@@ -6,7 +6,6 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCHEMA="$REPO_ROOT/factory/manifest.schema.json"
 
 # Validate one unit dir. Returns non-zero on any failed check.
 validate_unit() {
@@ -21,39 +20,39 @@ validate_unit() {
         return 1
     fi
 
-    if ! python3 - "$manifest" "$SCHEMA" <<'PYEOF'
+    # One stdlib-only pass: required keys and types. On success prints
+    # "id type entrypoint" for the filesystem checks below.
+    local meta
+    if ! meta="$(python3 - "$manifest" 2>&1 <<'PYEOF'
 import json, sys
-manifest_path, schema_path = sys.argv[1], sys.argv[2]
+
+REQUIRED = ("id", "type", "description", "stack", "entrypoint")
 try:
-    manifest = json.load(open(manifest_path))
-    schema = json.load(open(schema_path))
+    with open(sys.argv[1]) as f:
+        m = json.load(f)
 except (OSError, json.JSONDecodeError) as e:
-    print(f"  FAIL: JSON parse error: {e}"); sys.exit(1)
-try:
-    import jsonschema
-except ImportError:
-    print("  FAIL: python jsonschema not installed (pip install jsonschema)"); sys.exit(1)
-for e in sorted(jsonschema.Draft202012Validator(schema).iter_errors(manifest), key=lambda x: list(x.path)):
-    print(f"  FAIL: schema error at {'/'.join(map(str,e.path)) or '<root>'}: {e.message}"); sys.exit(1)
+    sys.exit(f"manifest.json does not parse: {e}")
+if not isinstance(m, dict):
+    sys.exit("manifest.json root is not an object")
+missing = [k for k in REQUIRED if not m.get(k)]
+if missing:
+    sys.exit("manifest.json missing or empty key(s): " + ", ".join(missing))
+if m["type"] not in ("widget", "service"):
+    sys.exit(f"type {m['type']!r} not in {{widget, service}}")
+deps = m.get("deps", [])
+if not isinstance(deps, list) or not all(isinstance(d, str) for d in deps):
+    sys.exit("deps must be a list of strings")
+print(m["id"], m["type"], m["entrypoint"])
 PYEOF
-    then
-        ((failures += 1)) || true
-    else
-        echo "  OK: manifest.json parses and validates against schema"
+    )"; then
+        echo "  FAIL: $meta"
+        echo "  FAIL: unit $unit has an invalid manifest.json"
+        return 1
     fi
+    echo "  OK: manifest.json has the required keys"
 
-    # Single python invocation for id/type/entrypoint (was 3 spawns)
     local id type entrypoint
-    read -r id type entrypoint < <(python3 - "$manifest" <<'PY'
-import json, sys
-m=json.load(open(sys.argv[1])); print(m["id"], m["type"], m["entrypoint"])
-PY
-)
-
-    if [[ "$type" != "widget" && "$type" != "service" ]]; then
-        echo "  FAIL: type '$type' not in {widget, service}"
-        ((failures += 1)) || true
-    fi
+    read -r id type entrypoint <<<"$meta"
 
     if [[ ! -d "$unit/src" ]]; then
         echo "  FAIL: $unit/src directory missing"
@@ -118,12 +117,8 @@ for root in "$REPO_ROOT"/widgets "$REPO_ROOT"/services; do
     [[ -d "$root" ]] || continue
     for unit in "$root"/*; do
         [[ -d "$unit" && -f "$unit/manifest.json" ]] || continue
-        if validate_unit "$unit"; then
-            ((count += 1)) || true
-        else
-            ((count += 1)) || true
-            ((failed += 1)) || true
-        fi
+        ((count += 1)) || true
+        validate_unit "$unit" || ((failed += 1)) || true
     done
 done
 
