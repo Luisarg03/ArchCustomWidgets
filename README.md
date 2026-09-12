@@ -76,7 +76,7 @@ flowchart TD
 
 | Unit | Type | What it does | Notes |
 |---|---|---|---|
-| `wallpaper` | service | Wallhaven downloader + rofi wallpaper selector + auto-theme pipeline (systemd `.path` → matugen + scheme set) | Keybinds `Ctrl+Super+T`, `Shift+Super+T`, `Ctrl+Shift+T` — wire manually |
+| `wallpaper` | service | Wallhaven downloader + rofi wallpaper selector + auto-theme pipeline (systemd `.path` → matugen + scheme set) | Keybinds `Ctrl+Super+T`, `Shift+Super+T` — wire manually |
 | `scheme-rotator` | widget | Rotates the active color scheme | Keybind `Super+Alt+T` — wire manually |
 | `waybar-power` | widget | Power menu module: lock / power / quit / reboot | |
 | `waybar-theme` | widget | Theme switcher module for waybar | |
@@ -95,7 +95,7 @@ flowchart TD
 
 | Unit | Extra deps |
 |---|---|
-| `wallpaper` | `rofi`, `matugen`, `caelestia-cli`, Wallhaven config at `~/.config/wallhaven-wallpaper/config` |
+| `wallpaper` | `rofi`, `matugen`, `curl`, `caelestia-cli` |
 | `scheme-rotator` | `caelestia-cli` |
 | `waybar-power` | `waybar`, `zenity`, `swaylock`, wallpapers in `/usr/share/backgrounds/Live-wallpaper/` |
 | `waybar-theme` | `waybar` |
