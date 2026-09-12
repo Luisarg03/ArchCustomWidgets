@@ -2,7 +2,7 @@
 Description=Watch Caelestia wallpaper path change and regenerate theme
 
 [Path]
-PathChanged=/home/hiro03/.local/state/caelestia/wallpaper/path.txt
+PathChanged=%h/.local/state/caelestia/wallpaper/path.txt
 Unit=acw-wallpaper-theme.service
 
 [Install]
