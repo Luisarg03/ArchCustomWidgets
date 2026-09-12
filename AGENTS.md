@@ -78,7 +78,7 @@ A unit is DONE only when ALL pass:
 - `README.md` is the entry point: What it does, Requirements, Quick start, Restore after format, Units table.
 - Every unit `README.md` must have 6 sections: What it does / Prerequisites / Install / Keybinds (or "none") / Config / Remove (+ Troubleshooting when needed). English, consistent tone.
 - `docs/keybinds-map.md` is authoritative — check before assigning any new combo; re-run `hyprctl binds -j` to refresh.
-- `docs/archcustomwidgets.md` is source for `docs/archcustomwidgets.html` (styled cover/print); edit md first.
+- `docs/archcustomwidgets.md` is the technical reference (markdown only).
 
 ## Layout
 
@@ -87,7 +87,7 @@ factory/     # validate + lib.sh (shared install helpers)
 widgets/     # widget units
 services/    # service units
 openspec/    # specs (canonical) + changes/ (local WIP, gitignored)
-docs/        # documentation (md source + html)
+docs/        # documentation (markdown)
 ```
 
 ## Language

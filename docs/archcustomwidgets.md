@@ -1,6 +1,8 @@
-# ArchCustomWidgets — Factory Technical Reference (source)
+# ArchCustomWidgets — Factory Technical Reference
 
-> Source for `docs/archcustomwidgets.html`. Edit this file; regenerate HTML with `factory/docs` (or keep HTML in sync manually). The HTML keeps the styled cover/print layout; this markdown is the maintainable single source.
+> Single technical reference for this repo. Markdown is the source of truth;
+> there is no HTML build (the hand-maintained HTML was removed instead of being
+> kept in sync by hand).
 
 ## 1. Introduction
 
@@ -15,7 +17,7 @@ Factory `factory/validate` → units `widgets/`+`services/` → copy to `~/.conf
 
 ## 3. Unit contract
 
-`manifest.json` (id, type, description, stack, entrypoint) validated by `factory/manifest.schema.json`. `install.sh` idempotent, backs up to `.bak-<ts>`, `--remove` leaves no trace.
+`manifest.json` (id, type, description, stack, entrypoint) checked by `factory/validate`. `install.sh` idempotent, backs up to `.bak-<ts>`, `--remove` leaves no trace.
 
 ## 4. Unit catalog (8 units: 3 services, 5 widgets)
 
@@ -35,7 +37,7 @@ Never hardcode colors; consume Caelestia wallbash palette via CSS vars / env tok
 
 ## 8. Validation
 
-7 checks: bash -n, manifest schema, clean install, uninstall no trace, is-enabled/is-active, theme, smoke test.
+7 checks: bash -n, manifest keys, clean install, uninstall no trace, is-enabled/is-active, theme, smoke test.
 
 ## 9. Lifecycle & OpenSpec
 
@@ -44,5 +46,3 @@ change proposal → spec (`SHALL/MUST`) → scaffold → impl → validate → a
 ## 10. Security & publishing
 
 Gitignored: `nftables.conf`, `**/notes.jsonl`, `*.bak-*`, `.opencode/`, `openspec/changes/`. Secrets never shipped.
-
-*Generated from this file — do not edit HTML directly without syncing.*
