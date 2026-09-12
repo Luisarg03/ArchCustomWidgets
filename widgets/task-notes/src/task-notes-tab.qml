@@ -39,6 +39,10 @@ Item {
         onLoaded: {
             root.notes = parseNotes(text());
             root.refreshSections();
+            if (!root.notes.some(function (n) {
+                return n.error;
+            }))
+                retryTimer.stop();
         }
 
         onLoadFailed: {
@@ -53,6 +57,26 @@ Item {
         interval: 300
         repeat: false
         onTriggered: notesFile.reload()
+    }
+
+    // Classifying takes a whole LLM call (~10-20s), so one reload right after
+    // the click would always show the old state. Poll until the error clears.
+    Timer {
+        id: retryTimer
+        interval: 2000
+        repeat: true
+        property int polls: 0
+
+        onTriggered: {
+            polls += 1;
+            notesFile.reload();
+            if (polls >= 15)
+                stop();
+        }
+        onRunningChanged: {
+            if (!running)
+                polls = 0;
+        }
     }
 
     // JSONL is append-only: newest note is the last line, so iterate in reverse.
@@ -483,7 +507,7 @@ Item {
                             Paths.home + "/.config/acw/task-notes/src/process_notes.sh",
                             "--retry"
                         ]);
-                        refreshTimer.start();
+                        retryTimer.restart();
                     }
                 }
             }
