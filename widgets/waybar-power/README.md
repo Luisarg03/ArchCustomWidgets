@@ -6,7 +6,7 @@ Waybar modules for locking and power actions. Two scripts, four modules:
 |---------------|------------------------------------------------------------------------|-----------------------------------------------|
 | `custom/lock` | `~/.config/acw/waybar-power/src/lock.sh`                               | Pick random wallpaper from `/usr/share/backgrounds/Live-wallpaper/`, write it into `~/.config/swaylock/swaylock.config`, then run `swaylock` |
 | `custom/power`| `~/.config/acw/waybar-power/src/power.sh --shutdown`                   | Confirm then `systemctl poweroff`             |
-| `custom/quit` | `~/.config/acw/waybar-power/src/power.sh --logout`                     | Confirm then exit session (`labwc --exit` by default) |
+| `custom/quit` | `~/.config/acw/waybar-power/src/power.sh --logout`                     | Confirm then exit the Hyprland session (`hyprctl dispatch exit`) |
 | `custom/reboot`| `~/.config/acw/waybar-power/src/power.sh --reboot`                    | Confirm then `systemctl reboot`               |
 
 ## Install
@@ -58,5 +58,5 @@ Style the modules with `#custom-lock`, `#custom-power`, `#custom-quit`,
   checked at runtime and the script aborts with an error if missing.
 - The lock script needs a wallpaper directory with `jpg`/`jpeg`/`png`/`gif`
   files — edit `WALLPAPER_DIR` in `src/lock.sh` to match your setup.
-- `power.sh` runs the logout command for the current desktop — edit
-  `LOGOUT_CMD` at the top of `src/power.sh` if you are not on labwc.
+- `power.sh` exits the session with `hyprctl dispatch exit` (Hyprland) — edit
+  `LOGOUT_CMD` at the top of `src/power.sh` for another compositor.
