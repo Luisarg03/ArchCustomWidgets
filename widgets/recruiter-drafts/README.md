@@ -137,6 +137,7 @@ test/smoke.sh   # canned LLM response, no network, no credentials; asserts on th
 
 | Symptom | Fix |
 |---|---|
+| Stuck on "Generando borrador..." for minutes | opencode scans its working directory as the project, and a popup launched from the keybind inherits `cwd=$HOME`. The script runs the model in an empty `$STATE_DIR/run` instead — if it still stalls, check the last `directory=` in `~/.local/share/opencode/log/opencode.log`. The call is capped at 180 s, after which the popup shows the error. |
 | `IMAP login failed: [AUTHENTICATIONFAILED]` | Wrong/expired app password, or 2FA is off. Generate a new one and rewrite the password file (mode `600`). |
 | `IMAP login failed: ... IMAP access is disabled` | Enable IMAP in Gmail settings. |
 | `app password file ... is mode 644` | `chmod 600 <file>` — the helper refuses a group/world-readable secret. |
