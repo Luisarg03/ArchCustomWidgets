@@ -81,6 +81,10 @@ fi
 [ -x "$HELPER" ] || die "helper missing: $HELPER" 2
 [ -n "$GMAIL_USER" ] || die "GMAIL_USER is not configured in $INSTALL_ROOT/env.conf" 2
 
+# Resolved once, before any cd: STATE_DIR is handed to the helper as-is.
+mkdir -p "$STATE_DIR"
+STATE_DIR="$(cd "$STATE_DIR" && pwd)"
+
 if [ "$CHECK" = 1 ]; then
     exec python3 "$HELPER" --user "$GMAIL_USER" --password-file "$GMAIL_APP_PASSWORD_FILE" --check
 fi
@@ -125,6 +129,11 @@ The language of this posting is: $LANG_HINT. Write the email in that language."
 
     RAW_OUT="$STATE_DIR/raw-$(date +%Y%m%d-%H%M%S).txt"
     ERR_OUT="$RAW_OUT.err"
+    # opencode scans its working directory as the project. Launched from the
+    # keybind the popup inherits cwd=$HOME, and scanning the whole home dir stalls
+    # for minutes before the model is ever called. Run it in an empty dir.
+    mkdir -p "$STATE_DIR/run"
+    cd "$STATE_DIR/run"
     if ! LLM_RAW="$(timeout 180 opencode run --pure -m "$MODEL" "$PAYLOAD" 2>"$ERR_OUT")"; then
         tail_msg="$(sed -e 's/\x1b\[[0-9;]*m//g' "$ERR_OUT" | tr '\n' ' ' | cut -c1-300)"
         die "opencode failed with model $MODEL (${tail_msg:-no stderr}); posting kept at $JOB_COPY" 1
