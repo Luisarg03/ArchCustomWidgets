@@ -9,16 +9,14 @@ import Quickshell
 import Quickshell.Io
 
 // Recruiter draft popup: launch with `qs -p capture.qml`.
-// The job posting is pasted here; draft_from_job.sh writes the email with the
-// configured LLM and saves it as a Gmail draft. Colors come from the Caelestia
-// wallbash scheme at runtime.
+// Paste the posting, submit, and the window closes: draft_from_job.sh continues
+// in a detached session and reports the outcome with a notification. Colors come
+// from the Caelestia wallbash scheme at runtime.
 ApplicationWindow {
     id: root
 
     readonly property string draftScript: trimFileProtocol(Qt.resolvedUrl("draft_from_job.sh"))
-    property bool submitting: false
     property string lastError: ""
-    property int elapsed: 0
 
     // Active palette — populated from scheme.json, fallback if missing
     property color colBackground: "#1E1B1A"
@@ -42,14 +40,8 @@ ApplicationWindow {
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
 
-    // Closing while the LLM runs would kill the draft: only quit when idle.
     // Qt.quit() (not just hide) — a hidden window would strand a ~350 MB `qs`.
-    onClosing: function(close) {
-        if (root.submitting)
-            close.accepted = false;
-        else
-            Qt.quit();
-    }
+    onClosing: Qt.quit()
 
     Shortcut {
         sequence: "Escape"
@@ -66,13 +58,6 @@ ApplicationWindow {
         interval: 50
         repeat: false
         onTriggered: jobArea.forceActiveFocus()
-    }
-
-    Timer {
-        interval: 1000
-        repeat: true
-        running: root.submitting
-        onTriggered: root.elapsed += 1
     }
 
     Component.onCompleted: {
@@ -160,7 +145,6 @@ ApplicationWindow {
                 color: root.colOnSurface
                 selectionColor: Qt.rgba(root.colPrimary.r, root.colPrimary.g, root.colPrimary.b, 0.3)
                 font.pixelSize: 13
-                enabled: !root.submitting
 
                 background: Rectangle {
                     radius: 10
@@ -187,7 +171,6 @@ ApplicationWindow {
                     wrapMode: TextArea.Wrap
                     textFormat: TextEdit.PlainText
                     selectByMouse: true
-                    enabled: !root.submitting
 
                     placeholderText: "Pegá el aviso completo de la posición (con el mail de postulación si está)..."
                     placeholderTextColor: root.colOnSurfaceVariant
@@ -204,7 +187,7 @@ ApplicationWindow {
                 }
             }
 
-            // Error label
+            // Only for a launcher failure: the run itself reports by notification.
             Text {
                 id: errorLabel
 
@@ -216,19 +199,15 @@ ApplicationWindow {
                 text: root.lastError
             }
 
-            // Footer: status + generate button
+            // Footer: hint + generate button
             RowLayout {
                 Layout.fillWidth: true
 
                 Text {
-                    id: statusLabel
-
                     Layout.fillWidth: true
                     font.pixelSize: 11
                     color: root.colOnSurfaceVariant
-                    text: root.submitting
-                        ? "Generando borrador... " + root.elapsed + "s (no cierres la ventana)"
-                        : ""
+                    text: "Se genera en segundo plano; te aviso por notificación."
                 }
 
                 Rectangle {
@@ -237,13 +216,11 @@ ApplicationWindow {
                     Layout.preferredWidth: 150
                     Layout.preferredHeight: 32
                     radius: 8
-                    color: root.submitting
-                        ? Qt.darker(root.colSurfaceHigh, 1.1)
-                        : (generateMouseArea.pressed
-                            ? Qt.darker(root.colPrimary, 1.15)
-                            : (generateMouseArea.containsMouse
-                                ? Qt.lighter(root.colPrimary, 1.08)
-                                : root.colPrimary))
+                    color: generateMouseArea.pressed
+                        ? Qt.darker(root.colPrimary, 1.15)
+                        : (generateMouseArea.containsMouse
+                            ? Qt.lighter(root.colPrimary, 1.08)
+                            : root.colPrimary)
 
                     Behavior on color {
                         ColorAnimation { duration: 100 }
@@ -251,8 +228,8 @@ ApplicationWindow {
 
                     Text {
                         anchors.centerIn: parent
-                        text: root.submitting ? "Generando..." : "Generar borrador"
-                        color: root.submitting ? root.colOnSurfaceVariant : root.colOnPrimary
+                        text: "Generar borrador"
+                        color: root.colOnPrimary
                         font.pixelSize: 13
                         font.weight: Font.DemiBold
                     }
@@ -260,8 +237,7 @@ ApplicationWindow {
                     MouseArea {
                         id: generateMouseArea
                         anchors.fill: parent
-                        hoverEnabled: !root.submitting
-                        enabled: !root.submitting
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.submit()
                     }
@@ -271,8 +247,10 @@ ApplicationWindow {
     }
 
     // --- Process ---
+    // --detach forks a new session and returns at once, so this exits in
+    // milliseconds; a non-zero exit means the launcher itself failed.
     Process {
-        id: draftProc
+        id: launchProc
 
         stderr: SplitParser {
             onRead: data => {
@@ -283,28 +261,23 @@ ApplicationWindow {
         }
 
         onExited: code => {
-            root.submitting = false;
             if (code === 0) {
                 root.close();
             } else if (root.lastError === "") {
-                root.lastError = "Falló la generación (exit " + code + "). Ver ~/.local/state/acw/recruiter-drafts/";
+                root.lastError = "No se pudo lanzar la generación (exit " + code + ")";
             }
         }
     }
 
     function submit() {
-        if (root.submitting)
-            return;
         var job = jobArea.text.trim();
         if (job === "")
             return;
         var to = toField.text.trim();
         root.lastError = "";
-        root.elapsed = 0;
-        root.submitting = true;
-        draftProc.command = to === ""
-            ? [root.draftScript, "--text", jobArea.text]
-            : [root.draftScript, "--to", to, "--text", jobArea.text];
-        draftProc.running = true;
+        launchProc.command = to === ""
+            ? [root.draftScript, "--detach", "--text", jobArea.text]
+            : [root.draftScript, "--detach", "--to", to, "--text", jobArea.text];
+        launchProc.running = true;
     }
 }

@@ -6,19 +6,19 @@ Job-application drafting for Gmail: a keybind opens a Quickshell popup where a j
 ## Requirements
 ### Requirement: Capture MUST open a standalone Quickshell window
 
-The unit MUST ship a standalone Quickshell window (`qs -p`, `src/capture.qml`) with a multiline text area for the job posting and an optional recipient override field. The keybind that opens it MUST be documented in the README and MUST NOT be auto-applied by the installer. The window MUST NOT close while a draft is being generated, and MUST quit the process (not only hide the window) when it does close.
+The unit MUST ship a standalone Quickshell window (`qs -p`, `src/capture.qml`) with a multiline text area for the job posting and an optional recipient override field. The keybind that opens it MUST be documented in the README and MUST NOT be auto-applied by the installer. Submitting MUST hand the work to a detached process and close the window immediately: the unit MUST NOT keep a progress UI open, MUST NOT block closing while the run proceeds, and MUST quit the process (not only hide the window) when it closes. The outcome MUST be reported by desktop notification only.
 
 #### Scenario: Job posting submitted
 
 - Given the unit installed and the keybind mapped
 - When the user pastes a job posting and submits
-- Then the drafting pipeline runs with that text
+- Then the window closes at once and the drafting pipeline keeps running in the background
 
-#### Scenario: Escape during generation does not kill the run
+#### Scenario: Escape does not cancel the run
 
-- Given a generation in progress
+- Given a run started from the popup
 - When the user presses Escape or closes the window
-- Then the window stays open until the run finishes
+- Then the run continues and still reports by notification
 
 #### Scenario: Keybind documented, not auto-applied
 
@@ -106,7 +106,7 @@ The Gmail app password MUST live in a `0600` file under the install root, MUST b
 
 ### Requirement: Every run MUST be inspectable and repeatable
 
-The unit MUST write the generated message to `<state>/<date>-<company>-<role>.eml` on every successful build, and MUST expose `--check` (IMAP login + drafts mailbox discovery), `--dry-run` (build and write the `.eml`, skip IMAP) and `--json FILE` (use a canned LLM response). The job posting MUST be accepted from `--text`, from `--job FILE`, or from the popup.
+The unit MUST write the generated message to `<state>/<date>-<company>-<role>.eml` on every successful build, MUST append the stdout/stderr of every detached run to `<state>/last.log`, and MUST expose `--check` (IMAP login + drafts mailbox discovery), `--dry-run` (build and write the `.eml`, skip IMAP) and `--json FILE` (use a canned LLM response). The job posting MUST be accepted from `--text`, from `--job FILE`, or from the popup, and `--detach` MUST return immediately after handing the run to a new session.
 
 #### Scenario: Dry run leaves no server trace
 

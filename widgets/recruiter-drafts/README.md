@@ -13,7 +13,7 @@ Paste a job posting, press a key, get a ready-to-send application email **as a G
   - the CV PDF as an attachment, renamed for the recruiter;
   - the message is written to an `.eml` backup **and** appended to the Gmail Drafts mailbox over IMAPS with an app password.
 - Nothing is ever sent: the unit has no SMTP path. You open Gmail, review the draft, and send it yourself.
-- The window stays open while the model runs (a counter shows the elapsed seconds) and refuses to close mid-run, so an accidental `Esc` cannot kill a draft. A desktop notification reports the outcome either way.
+- **Fire and forget**: submitting closes the window at once (`--detach` forks a new session, so the run survives the popup exiting). There is no progress UI — the only feedback is the desktop notification when the draft is created or when the run fails, plus `$STATE_DIR/last.log`.
 
 ## Architecture
 
@@ -118,8 +118,8 @@ Hyprland 0.56 runs the Lua config (`configProvider: lua`); the `.conf` twins are
 ## Usage
 
 1. Copy the whole posting (including the address it says to apply to).
-2. `Super+H`, paste, optionally fill **Para**, then click **Generar borrador** or press `Ctrl+Enter`.
-3. Wait ~20–40 s (a memory lookup adds a round trip). The notification says which draft was created; the popup closes on success and shows the error in place on failure.
+2. `Super+H`, paste, optionally fill **Para**, then click **Generar borrador** or press `Ctrl+Enter`. The window closes immediately.
+3. Wait ~20–40 s. A notification says which draft was created; a failure raises a critical notification with the reason.
 4. Open Gmail → Drafts, review, send.
 
 Command line, for re-runs and debugging:
@@ -130,6 +130,7 @@ src/draft_from_job.sh --text "..." --to rrhh@x.com   # explicit recipient wins
 src/draft_from_job.sh --job aviso.md --lang en       # force the email language
 src/draft_from_job.sh --job aviso.md --dry-run       # build the .eml, no IMAP
 src/draft_from_job.sh --job aviso.md --json llm.json --dry-run   # no model either (canned response)
+src/draft_from_job.sh --detach --text "..."          # what the popup runs: background + notifications
 ```
 
 Handy while tuning the prompt: `~/.local/state/acw/recruiter-drafts/raw-<ts>.txt` holds the raw model answer of every real run.
@@ -163,6 +164,7 @@ State kept under `$STATE_DIR`:
 | `raw-<ts>.txt` | raw model output (kept for every real run) |
 | `<date>-<company>-<role>.eml` | every generated message |
 | `raw-<ts>.txt.err` | dsh stderr (reasoning + errors) when the run fails |
+| `last.log` | stdout/stderr of every detached (popup) run, newest last |
 
 ## Remove
 
@@ -183,7 +185,8 @@ test/smoke.sh   # canned LLM response, no network, no credentials; asserts on th
 | Symptom | Fix |
 |---|---|
 | `DeepSeek Harness not found at ...` | `DSH_ROOT` points at the wrong checkout; fix it in `env.conf`. |
-| `dsh run failed (profile recruiter, 180s)` | Read the tail printed in the notification and `$STATE_DIR/raw-*.txt.err`. The profile may be missing (`dsh --profile recruiter --dump-config`), the vault MCP may fail to start (`uv` missing), or the model call timed out. |
+| `dsh run failed (profile recruiter, 180s)` | Read the tail printed in the notification and `$STATE_DIR/last.log`. The profile may be missing (`dsh --profile recruiter --dump-config`), the vault MCP may fail to start (`uv` missing), or the model call timed out. |
+| Popup closes but no notification ever arrives | The detached run died before notifying. Read `$STATE_DIR/last.log` (each run appends a `=== date ===` header) and the newest `raw-*.txt.err`. |
 | Draft comes out long | The prompt sets the budget; if the model ignores it the notification carries `body is long (N chars)`. Tighten `src/prompt.md` (installed copy) and re-run. |
 | Draft mentions a skill the candidate does not have | The prompt forbids claiming missing skills; check the installed `prompt.md` was not replaced by an older copy (`./install.sh` refreshes it). |
 | `IMAP login failed: [AUTHENTICATIONFAILED]` | Wrong/expired app password, or 2FA is off. Generate a new one and rewrite the password file (mode `600`). |
