@@ -65,15 +65,15 @@ match exactly (`opencode/muse-spark-1.2-contributor-free`, not
 `opencode-go/...`). An unknown model makes every classification fail and the
 notes land in **Sin clasificar** with a retry chip.
 
-## Keybind (wire manually in ~/.config/hypr/custom/keybinds.conf)
+## Keybind (wire manually in ~/.config/hypr/custom/keybinds.lua)
 
 Ctrl+Super+G is **not** auto-applied; add it yourself:
 
-```
-bind = CTRL SUPER, G, exec, qs -p ~/.config/acw/task-notes/src/capture.qml
+```lua
+hl.bind("SUPER + CTRL" .. " + " .. "G", hl.dsp.exec_cmd("qs -p ~/.config/acw/task-notes/src/capture.qml"))
 ```
 
-The combo was chosen from `docs/keybinds-map.md`: Super+G is taken by togglegroup.
+Hyprland runs the Lua config (`configProvider: lua`): the `.conf` twins are legacy mirrors and binds added there are dead — see `docs/keybinds-map.md`. The combo was chosen from that file: Super+G is taken by togglegroup.
 
 ## See the Tasks tab
 
