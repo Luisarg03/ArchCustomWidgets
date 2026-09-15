@@ -82,7 +82,7 @@ flowchart TD
 | `waybar-theme` | widget | Theme switcher module for waybar | |
 | `clipboard-rofi` | widget | Rofi clipboard manager | Keybind `Super+V` — wire manually |
 | `task-notes` | widget | Quick note capture (`Ctrl+Super+G`) + batched LLM classification (title/type/priority/tags/due) + Caelestia Tasks tab | Needs `quickshell` + `opencode`; see `widgets/task-notes/README.md` |
-| `recruiter-drafts` | widget | Job-posting popup (`Super+H`) → DeepSeek Harness drafts a short application email from the profile in the memory vault → saved as a **Gmail draft** over IMAP, CV attached, HTML signature included | Needs `quickshell` + a `dsh` headless profile + a Gmail app password (2FA); see `widgets/recruiter-drafts/README.md` |
+| `recruiter-drafts` | widget | Job-posting popup (`Super+H`) → DeepSeek Harness drafts a short application email in your own voice from the profile in the memory vault → saved as a **Gmail draft** over IMAP, current CV attached, HTML signature and AI-disclosure footer included | Needs `quickshell` + a `dsh` headless profile + a Gmail app password (2FA); see `widgets/recruiter-drafts/README.md` |
 | `vpn-surfshark` | service | Surfshark VPN quick-toggle (Caelestia quick-toggles `utilities.vpn`), `surfshark-connect`/`surfshark-disconnect` units | System-level files → sudo install. Needs own `nftables.conf` + `/etc/wireguard/surfshark.conf` |
 | `quickshell-watchdog` | service | Watchdog for quickshell, systemd user unit + timer | |
 

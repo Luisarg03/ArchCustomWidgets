@@ -1,6 +1,6 @@
 # recruiter-drafts
 
-Paste a job posting, press a key, get a ready-to-send application email **as a Gmail draft** — a short, concrete pitch written by DeepSeek Harness from the candidate's real profile and skills, with the CV attached and the HTML signature included.
+Paste a job posting, press a key, get a ready-to-send application email **as a Gmail draft** — a short, concrete pitch written by DeepSeek Harness from the candidate's real profile and skills, **in the candidate's own voice**, with the CV attached, the HTML signature included and a footer stating that an AI agent generated it.
 
 ## What it does
 
@@ -8,9 +8,11 @@ Paste a job posting, press a key, get a ready-to-send application email **as a G
 - `draft_from_job.sh` persists the posting, then runs **one headless DeepSeek Harness session** (`dsh --profile recruiter`) with `src/prompt.md` + the structured profile + the posting, and requires a single JSON object: `{to, subject, body, lang, company, role}`.
   - The `recruiter` profile mounts the **memory MCP read-only**, so the model pulls the candidate's full professional profile from the vault before writing.
   - The draft is deliberately **short** (80–130 words, at most 2 bullets). When the posting asks for something the profile does not have, the model names the closest tool or architecture it does have and says the experience transfers — one sentence, never a paragraph.
+  - The prompt makes the model write **in the candidate's voice**: first person, short declarative sentences, no filler or buzzwords, no exclamation marks, no emoji, correct accents, neutral rioplatense register, and no generic closers ("Quedo atento a su respuesta", "Saludos cordiales").
 - `gmail_draft.py` (python3 stdlib, no dependencies) builds the message:
   - `multipart/alternative` → `text/plain` body + `text/html` body with the HTML signature inlined;
   - the CV PDF as an attachment, renamed for the recruiter;
+  - a **disclosure footer** at the bottom of both MIME parts — `Generado automáticamente por un agente de IA.`, or `Generated automatically by an AI agent.` when the email is in English — written by the helper, never by the model;
   - the message is written to an `.eml` backup **and** appended to the Gmail Drafts mailbox over IMAPS with an app password.
 - Nothing is ever sent: the unit has no SMTP path. You open Gmail, review the draft, and send it yourself.
 - **Fire and forget**: submitting closes the window at once (`--detach` forks a new session, so the run survives the popup exiting). There is no progress UI — the only feedback is the desktop notification when the draft is created or when the run fails, plus `$STATE_DIR/last.log`.
@@ -28,6 +30,7 @@ draft_from_job.sh
       |        +-- $STATE_DIR/raw-<ts>.txt   raw model output
       v stdin: LLM JSON
 gmail_draft.py
+      +-- text/plain + text/html + CV attachment + AI-disclosure footer
       +-- $STATE_DIR/<date>-<company>-<role>.eml    always written
       v IMAP APPEND (\Draft)
 Gmail > Drafts   (review + send by hand)
@@ -146,7 +149,7 @@ Handy while tuning the prompt: `~/.local/state/acw/recruiter-drafts/raw-<ts>.txt
 | `GMAIL_FROM_NAME` | `Luis Meyehen Paz` |
 | `GMAIL_APP_PASSWORD_FILE` | `$INSTALL_ROOT/gmail-app-password` |
 | `PROFILE_FILE` | `~/Private/Projects/MyCv/assets/profile.yaml` |
-| `CV_FILE` | `~/Private/Projects/MyCv/assets/cv.pdf` |
+| `CV_FILE` | `~/Private/Projects/MyCv/outputs/luis-meyehen-paz-resume.pdf` |
 | `CV_NAME` | `Luis Meyehen Paz - CV.pdf` |
 | `SIGNATURE_FILE` | `~/Private/Projects/MyCv/outputs/signature/signature.html` |
 | `PROMPT_FILE` | `$INSTALL_ROOT/src/prompt.md` |
@@ -196,4 +199,6 @@ test/smoke.sh   # canned LLM response, no network, no credentials; asserts on th
 | `the model returned no JSON object` | The model answered prose; the raw output is under `$STATE_DIR/raw-*.txt`. Re-run with the same posting (`jobs/<ts>.txt`). |
 | `no recipient detected` warning | The posting had no usable address: the draft is created with an empty **To**, fill it in Gmail, or use the popup's **Para** field. |
 | Notification says the CV or signature is missing | Fix `CV_FILE` / `SIGNATURE_FILE`; the draft is still created without that part. |
+| The attached CV is an old revision | `CV_FILE` must point at the canonical render (`MyCv/outputs/luis-meyehen-paz-resume.pdf`), not at the `MyCv/assets/cv.pdf` mirror. After editing the CV, re-render it (`typst compile assets/cv.typ outputs/luis-meyehen-paz-resume.pdf`) and check the extracted text (`pdftotext -layout …`) before applying again. |
+| Change the disclosure footer wording | Edit `AI_NOTICE` in `src/gmail_draft.py` and re-run `./install.sh`. The footer follows the email language (`lang` from the model; Spanish when it is missing or unknown). |
 | Popup does not open | `qs` not installed, or the keybind was not added (see Keybinds). Check `qs -p ~/.config/acw/recruiter-drafts/src/capture.qml` in a terminal. |

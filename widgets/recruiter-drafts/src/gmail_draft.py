@@ -25,6 +25,12 @@ IMAP_PORT = 993
 DRAFTS_FALLBACKS = ("[Gmail]/Drafts", "[Gmail]/Borradores", "Drafts")
 EMAIL_RE = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
 MBOX_RE = re.compile(r'"([^"]*)"\s*$')
+# Disclosure footer, one per language: deterministic, never written by the model.
+# Change the wording here and re-run install.sh.
+AI_NOTICE = {
+    "es": "Generado automáticamente por un agente de IA.",
+    "en": "Generated automatically by an AI agent.",
+}
 
 
 def die(message, code=1):
@@ -58,6 +64,11 @@ def read_password(path):
 
 def valid_email(value):
     return value.strip() if isinstance(value, str) and EMAIL_RE.match(value.strip()) else ""
+
+
+def ai_notice(lang):
+    """The disclosure footer in the email's language; Spanish when unknown."""
+    return AI_NOTICE["en"] if str(lang or "").strip().lower().startswith("en") else AI_NOTICE["es"]
 
 
 def paragraphs(body):
@@ -107,13 +118,17 @@ def build_message(args, data):
     if args.from_name:
         plain += args.from_name + "\n"
     plain += args.user
+    notice = ai_notice(data.get("lang"))
+    plain += "\n\n" + notice
     msg.set_content(plain)
 
     signature = inner_body(args.signature)
     if not signature and args.signature:
         warnings.append("warn: signature file missing (%s); HTML part omitted" % args.signature)
     if signature:
-        msg.add_alternative(html_body(body) + "\n" + signature, subtype="html")
+        html_part = html_body(body) + "\n" + signature
+        html_part += '\n<p style="margin-top:12px;font-size:12px;color:#6b7280;">%s</p>' % html.escape(notice)
+        msg.add_alternative(html_part, subtype="html")
 
     if args.attach:
         cv = Path(args.attach)
