@@ -142,8 +142,9 @@ factory/validate
 for u in widgets/* services/*; do echo "==> $u"; (cd "$u" && ./install.sh); done
 
 # 3. Wire keybinds manually (never auto-applied — see docs/keybinds-map.md)
-#    e.g. Ctrl+Super+G for task-notes, Super+V for clipboard, etc.
-#    Edit ~/.config/hypr/custom/keybinds.conf
+#    e.g. Ctrl+Super+G for task-notes, Super+H for recruiter-drafts, Super+V for clipboard
+#    Edit ~/.config/hypr/custom/keybinds.lua (Hyprland runs the Lua config; .conf is legacy)
+#    then: hyprctl reload
 
 # 4. Reload shell
 qs -c caelestia   # or Ctrl+Super+R

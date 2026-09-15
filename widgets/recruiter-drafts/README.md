@@ -66,11 +66,13 @@ Verify the account before using the popup:
 
 ## Keybinds
 
-None auto-applied. Add it to `~/.config/hypr/custom/keybinds.conf` (check `docs/keybinds-map.md` first):
+None auto-applied: the installer never touches your Hyprland config (check `docs/keybinds-map.md` first). Add it to `~/.config/hypr/custom/keybinds.lua`:
 
+```lua
+hl.bind("SUPER" .. " + " .. "H", hl.dsp.exec_cmd("qs -p ~/.config/acw/recruiter-drafts/src/capture.qml"))
 ```
-bind = SUPER, H, exec, qs -p ~/.config/acw/recruiter-drafts/src/capture.qml
-```
+
+Hyprland 0.56 runs the Lua config (`configProvider: lua`); the `.conf` twins are legacy mirrors, so a `bind = SUPER, H, ...` line added there does nothing. Reload with `hyprctl reload`; `hyprctl binds -j` should then list `modmask 64 / key H`.
 
 ## Usage
 
