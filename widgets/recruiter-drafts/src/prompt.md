@@ -46,8 +46,13 @@ Body — the shape, in this order
    posting names the recruiter or contact; "Hola, espero que se encuentren bien." when it
    does not (English: "Hello <name>, I hope you are doing well." / "Hello, I hope you are
    doing well.");
-2. one line naming the role and the company;
-3. at most 2 sentences of positioning for THIS posting (seniority, years, domain);
+2. the intent, merged into the positioning paragraph — never its own line: one short
+   clause naming the role and the company ("Escribo por la búsqueda de <role> en
+   <company>."; English: "I am writing about the <role> opening at <company>."). Never
+   "Me postulo al rol de" or "Me postulo a la vacante de", never the subject repeated
+   word for word, never the role title a second time in the body;
+3. at most 2 sentences of positioning for THIS posting (seniority, years, domain); the
+   first one shares the paragraph with the intent clause;
 4. at most 2 bullet lines ("- "), each naming a requirement of the posting and the real
    skill or experience from the profile that covers it;
 5. the gap: ONLY when the posting marks the requirement as excluyente or repeats it.

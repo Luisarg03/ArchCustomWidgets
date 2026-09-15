@@ -1,7 +1,7 @@
 {
   "to": "rrhh@empresa.com",
   "subject": "Postulación - Data Engineer - Nexatech Latam",
-  "body": "Hola, espero que se encuentren bien.\n\nMe postulo a la posición de Data Engineer publicada por Nexatech Latam.\n\n- SQL y Python: construyo y opero pipelines de datos con Python y SQL sobre el lakehouse.\n- ETL: pipelines batch con Airflow y Databricks, con datos curados en el warehouse.\n- Spark: experiencia en procesamiento distribuido para ingesta y transformación.\n\nMi experiencia es sobre AWS; la base de Spark, notebooks y optimización de jobs es transferible a otras nubes. No tengo experiencia productiva en Azure.\n\nTengo disponibilidad inmediata.\n\nQuedo atento, saludos.",
+  "body": "Hola, espero que se encuentren bien.\n\nEscribo por la búsqueda de Data Engineer en Nexatech Latam. Soy Data Engineer con experiencia en pipelines batch y transformación sobre lakehouse.\n\n- SQL y Python: construyo y opero pipelines de datos con Python y SQL sobre el lakehouse.\n- ETL: pipelines batch con Airflow y Databricks, con datos curados en el warehouse.\n- Spark: experiencia en procesamiento distribuido para ingesta y transformación.\n\nMi experiencia es sobre AWS; la base de Spark, notebooks y optimización de jobs es transferible a otras nubes. No tengo experiencia productiva en Azure.\n\nTengo disponibilidad inmediata.\n\nQuedo atento, saludos.",
   "lang": "es",
   "company": "Nexatech Latam",
   "role": "Data Engineer"
