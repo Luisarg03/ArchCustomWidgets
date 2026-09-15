@@ -5,6 +5,7 @@
 #   draft_from_job.sh --text "texto del aviso"
 #   draft_from_job.sh --check          # IMAP login + drafts mailbox discovery
 #   draft_from_job.sh --job aviso.md --json llm.json --dry-run   # no LLM, no IMAP
+#   draft_from_job.sh --detach --text "..."   # popup mode: background + notifications
 #
 # The posting is persisted before the LLM call, the raw model output is kept when
 # parsing fails, and every generated message is written as an .eml under $STATE_DIR.
@@ -60,6 +61,8 @@ LANG_HINT=""
 LLM_JSON=""
 DRY_RUN=0
 CHECK=0
+DETACH=0
+ORIG_ARGS=("$@")
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -70,6 +73,10 @@ while [ $# -gt 0 ]; do
         --json) LLM_JSON="${2:-}"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --check) CHECK=1; shift ;;
+        # Popup mode: hand the work to a detached session and return immediately,
+        # so the capture window can close and only a notification reports the
+        # outcome. The CLI stays foreground unless this flag is passed.
+        --detach) DETACH=1; shift ;;
         -h | --help) usage; exit 0 ;;
         *) die "unknown argument: $1" 1 ;;
     esac
@@ -86,6 +93,19 @@ done
 # Resolved once, before any cd: STATE_DIR is handed to the helper as-is.
 mkdir -p "$STATE_DIR"
 STATE_DIR="$(cd "$STATE_DIR" && pwd)"
+
+if [ "$DETACH" = 1 ]; then
+    # New session (setsid --fork): the popup exits and kills its own children, and
+    # this run survives it. Everything lands in last.log; the user only sees
+    # notifications.
+    args=()
+    for arg in "${ORIG_ARGS[@]}"; do
+        [ "$arg" = "--detach" ] || args+=("$arg")
+    done
+    printf '\n=== %s ===\n' "$(date '+%F %T')" >>"$STATE_DIR/last.log"
+    setsid --fork "$0" "${args[@]}" >>"$STATE_DIR/last.log" 2>&1 &
+    exit 0
+fi
 
 if [ "$CHECK" = 1 ]; then
     exec python3 "$HELPER" --user "$GMAIL_USER" --password-file "$GMAIL_APP_PASSWORD_FILE" --check
