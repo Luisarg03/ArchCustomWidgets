@@ -180,6 +180,10 @@ def classify_batch(items):
             capture_output=True,
             text=True,
             timeout=timeout,
+            # opencode scans its cwd as the project; a systemd unit starts in
+            # $HOME, and scanning the whole home dir stalls for minutes. Use the
+            # small state dir that already holds the notes store.
+            cwd=os.path.dirname(os.path.abspath(NOTES_FILE)),
         )
     except FileNotFoundError:
         for it in items:

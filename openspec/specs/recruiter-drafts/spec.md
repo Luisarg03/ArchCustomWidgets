@@ -26,9 +26,9 @@ The unit MUST ship a standalone Quickshell window (`qs -p`, `src/capture.qml`) w
 - When the installer finishes
 - Then no keybind was written to any Hyprland config, and the README documents the combo to add manually
 
-### Requirement: The email MUST be drafted by the configured LLM from the candidate profile
+### Requirement: The email MUST be drafted by DeepSeek Harness from the candidate profile
 
-The unit MUST call the user's opencode CLI (`opencode run --pure -m <MODEL>`) exactly once per submission, with a prompt (`src/prompt.md`) that carries the candidate profile file and the job posting, and MUST require a single JSON object with keys `to`, `subject`, `body`, `lang`, `company`, `role`. The prompt MUST instruct the model to write in the posting's language, to ground every claim in the profile, to never invent metrics or numbers, and to omit any signature or contact block. `MODEL`, the profile path and the prompt path MUST be configurable through `env.conf`.
+The unit MUST call a DeepSeek Harness headless profile (`dsh --profile <name> <payload>`, one fresh session per submission) with a prompt (`src/prompt.md`) that carries the candidate profile file and the job posting, and MUST require a single JSON object with keys `to`, `subject`, `body`, `lang`, `company`, `role`. The profile MUST run `deepseek-official / deepseek-flash` with `reasoningEffort: low` and MUST mount the memory MCP read-only, and the prompt MUST instruct the model to read the candidate's profile from that MCP before writing and never to write to memory. The prompt MUST also cap the draft at 80-130 words with at most two bullet lines, and MUST instruct the model to answer a requirement it cannot evidence with ONE short sentence naming the closest tool or architecture the profile does have. `DSH_ROOT`, the profile name, the profile path and the prompt path MUST be configurable through `env.conf`.
 
 #### Scenario: Valid LLM JSON
 
@@ -36,9 +36,21 @@ The unit MUST call the user's opencode CLI (`opencode run --pure -m <MODEL>`) ex
 - When the pipeline runs
 - Then a JSON object with a non-empty subject and body is produced and used to build the message
 
+#### Scenario: Short, evidence-backed draft
+
+- Given a posting asking for a technology the profile does not list
+- When the draft is written
+- Then the body stays within the word budget, claims no missing skill, and names the closest transferable tool in one sentence
+
+#### Scenario: Profile read from memory, never written
+
+- Given a run with the memory MCP mounted
+- When the model drafts the email
+- Then it reads the candidate profile through the MCP and performs no memory write
+
 #### Scenario: Invalid or failed LLM output
 
-- Given the model returning non-JSON, invalid JSON, a non-zero exit, or exceeding the 180 s timeout
+- Given the model returning non-JSON, invalid JSON, a non-zero exit, or exceeding `LLM_TIMEOUT` (180 s by default)
 - When the pipeline runs
 - Then the raw output is stored under the state dir, a critical notification names the cause and the file, and no draft is created
 

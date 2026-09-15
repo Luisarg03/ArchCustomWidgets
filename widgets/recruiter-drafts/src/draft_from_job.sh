@@ -30,7 +30,9 @@ CV_NAME="${CV_NAME:-CV.pdf}"
 SIGNATURE_FILE="${SIGNATURE_FILE:-}"
 PROMPT_FILE="${PROMPT_FILE:-$INSTALL_ROOT/src/prompt.md}"
 STATE_DIR="${STATE_DIR:-$HOME/.local/state/acw/recruiter-drafts}"
-MODEL="${MODEL:-opencode/muse-spark-1.2-contributor-free}"
+DSH_ROOT="${DSH_ROOT:-$HOME/Private/deepseek-harness}"
+DSH_PROFILE="${DSH_PROFILE:-recruiter}"
+LLM_TIMEOUT="${LLM_TIMEOUT:-180}"
 HELPER="$SCRIPT_DIR/gmail_draft.py"
 # ponytail: fixed cut, raise it only if a legitimate posting ever hits it.
 MAX_JOB_CHARS="${MAX_JOB_CHARS:-20000}"
@@ -73,10 +75,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-# systemd/keybind environments have a minimal PATH; opencode lives in ~/.opencode/bin.
-if ! command -v opencode >/dev/null 2>&1 && [ -x "$HOME/.opencode/bin/opencode" ]; then
-    export PATH="$HOME/.opencode/bin:$PATH"
-fi
+# Hyprland hands its children a short PATH (no pnpm, no ~/.local/bin): the dsh
+# launcher is node + tsx from the harness checkout, both resolved explicitly.
+[ -f "$DSH_ROOT/apps/cli/src/bin.ts" ] || \
+    die "DeepSeek Harness not found at $DSH_ROOT (set DSH_ROOT in $INSTALL_ROOT/env.conf)" 2
 
 [ -x "$HELPER" ] || die "helper missing: $HELPER" 2
 [ -n "$GMAIL_USER" ] || die "GMAIL_USER is not configured in $INSTALL_ROOT/env.conf" 2
@@ -129,14 +131,13 @@ The language of this posting is: $LANG_HINT. Write the email in that language."
 
     RAW_OUT="$STATE_DIR/raw-$(date +%Y%m%d-%H%M%S).txt"
     ERR_OUT="$RAW_OUT.err"
-    # opencode scans its working directory as the project. Launched from the
-    # keybind the popup inherits cwd=$HOME, and scanning the whole home dir stalls
-    # for minutes before the model is ever called. Run it in an empty dir.
-    mkdir -p "$STATE_DIR/run"
-    cd "$STATE_DIR/run"
-    if ! LLM_RAW="$(timeout 180 opencode run --pure -m "$MODEL" "$PAYLOAD" 2>"$ERR_OUT")"; then
+    # One-shot headless run: fresh session, final answer on stdout, reasoning on
+    # stderr. The harness boots with its checkout as the workspace, so the cwd is
+    # set explicitly instead of inheriting whatever the keybind handed us.
+    if ! LLM_RAW="$(cd "$DSH_ROOT" && timeout "$LLM_TIMEOUT" \
+        node --import tsx/esm apps/cli/src/bin.ts --profile "$DSH_PROFILE" "$PAYLOAD" 2>"$ERR_OUT")"; then
         tail_msg="$(sed -e 's/\x1b\[[0-9;]*m//g' "$ERR_OUT" | tr '\n' ' ' | cut -c1-300)"
-        die "opencode failed with model $MODEL (${tail_msg:-no stderr}); posting kept at $JOB_COPY" 1
+        die "dsh run failed (profile $DSH_PROFILE, ${LLM_TIMEOUT}s) ${tail_msg:-sin stderr}; aviso guardado en $JOB_COPY" 1
     fi
     printf '%s\n' "$LLM_RAW" > "$RAW_OUT"
     rm -f "$ERR_OUT"

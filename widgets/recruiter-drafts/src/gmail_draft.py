@@ -93,6 +93,8 @@ def build_message(args, data):
         die("the LLM returned no subject")
     if not body:
         die("the LLM returned no body")
+    if len(body) > 1400:
+        warnings.append("warn: body is long (%d chars); the prompt asks for 80-130 words" % len(body))
 
     msg = EmailMessage()
     msg["From"] = formataddr((args.from_name, args.user)) if args.from_name else args.user

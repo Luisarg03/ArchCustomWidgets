@@ -1,8 +1,8 @@
 {
   "id": "recruiter-drafts",
   "type": "widget",
-  "description": "Job-posting popup (Super+H) that drafts a tailored application email with the configured LLM and saves it as a Gmail draft over IMAP, CV attached and HTML signature included",
+  "description": "Job-posting popup (Super+H) that drafts a short application email with DeepSeek Harness (flash v4.1, effort low) plus the memory MCP, and saves it as a Gmail draft over IMAP, CV attached and HTML signature included",
   "stack": "bash",
   "entrypoint": "src/capture.qml",
-  "deps": ["quickshell", "opencode", "libnotify"]
+  "deps": ["quickshell", "deepseek-harness", "node", "libnotify"]
 }
