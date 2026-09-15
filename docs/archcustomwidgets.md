@@ -19,9 +19,9 @@ Factory `factory/validate` → units `widgets/`+`services/` → copy to `~/.conf
 
 `manifest.json` (id, type, description, stack, entrypoint) checked by `factory/validate`. `install.sh` idempotent, backs up to `.bak-<ts>`, `--remove` leaves no trace.
 
-## 4. Unit catalog (8 units: 3 services, 5 widgets)
+## 4. Unit catalog (9 units: 3 services, 6 widgets)
 
-wallpaper, vpn-surfshark, quickshell-watchdog, scheme-rotator, waybar-power, waybar-theme, clipboard-rofi, task-notes.
+wallpaper, vpn-surfshark, quickshell-watchdog, scheme-rotator, waybar-power, waybar-theme, clipboard-rofi, task-notes, recruiter-drafts.
 
 ## 5. Install model
 

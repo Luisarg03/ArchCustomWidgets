@@ -1,0 +1,8 @@
+{
+  "id": "recruiter-drafts",
+  "type": "widget",
+  "description": "Job-posting popup (Super+H) that drafts a tailored application email with the configured LLM and saves it as a Gmail draft over IMAP, CV attached and HTML signature included",
+  "stack": "bash",
+  "entrypoint": "src/capture.qml",
+  "deps": ["quickshell", "opencode", "libnotify"]
+}

@@ -1,6 +1,6 @@
 # Keybind map — hiro03 Hyprland (Caelestia 3.x)
 
-Authoritative map of LIVE keybinds, verified 2026-08-14 (re-checked 2026-08-29 — no changes) via `hyprctl binds` (109 distinct live binds) + config inventory. **Check this file before assigning any new key combo.** Re-run `hyprctl binds -j | jq` after any Hyprland config change and update the date above.
+Authoritative map of LIVE keybinds, verified 2026-08-14 (re-checked 2026-08-29 and 2026-09-15) via `hyprctl binds` (108 distinct live binds) + config inventory. **Check this file before assigning any new key combo.** Re-run `hyprctl binds -j | jq` after any Hyprland config change and update the date above.
 
 ## How to read this
 
@@ -71,12 +71,12 @@ Authoritative map of LIVE keybinds, verified 2026-08-14 (re-checked 2026-08-29 �
 | Super+D | fullscreen | dead caelestia file |
 | Super+F/X/I | fullscreen/text-editor/settings | dead caelestia file |
 
-## Free combos (verified 2026-08-14)
+## Free combos (verified 2026-09-15)
 
-Safest `Super+letter`: **H, U, Y, Z** (never referenced in any layer, live or dead).
+Safest `Super+letter`: **U, Y, Z** (never referenced in any layer, live or dead; **H** was taken by recruiter-drafts on 2026-09-15).
 Next-safest: **D, F** (dead-caelestia only; free today).
 `Super+Shift+letter` free: everything except A, G, S, T, W — safest **U, Y, Z**.
-`Ctrl+Super+letter` free: everything except R, T — safest **G, U, Y, Z**.
+`Ctrl+Super+letter` free: everything except R, T, G — safest **U, Y, Z**.
 `Alt+Super+letter` free: everything except G, S, T — safest **U, Y, Z**.
 
 ## Assigned by ArchCustomWidgets units
@@ -84,6 +84,7 @@ Next-safest: **D, F** (dead-caelestia only; free today).
 | Combo | Unit | Action |
 |---|---|---|
 | Ctrl+Super+G | task-notes | capture note (qs -p capture.qml) — added 2026-08-14; was Super+G until conflict found (Super+G = togglegroup) |
+| Super+H | recruiter-drafts | job-posting popup (qs -p capture.qml) — added 2026-09-15; free in every layer before that |
 
 ## Verification command
 
