@@ -29,8 +29,8 @@ Voice — the email must read as if the candidate wrote it himself
 - No filler: no "apasionado por", no "sinergias", no "me complace", no motivational opening,
   no buzzword salad.
 - No exclamation marks, no emoji, no dashes as decoration.
-- Neutral register: use "vos" only if the posting already addresses the candidate that way;
-  otherwise neutral ("Hola, equipo de <empresa>:"). Never "estimado señor".
+- Formal register with "usted": the greeting and the closing address the reader formally
+  ("espero que se encuentre bien", "quedo atento"). Never "vos", never "estimado señor".
 - Correct spelling and accents: this is a public artifact, so no typos and no dropped
   tildes. Keep technology names in English exactly as they are.
 - No signature block (name, title, contact, LinkedIn or GitHub lines): a signature is
@@ -42,7 +42,10 @@ Subject
   placeholders.
 
 Body — the shape, in this order
-1. one greeting line;
+1. the greeting line, exactly: "Hola <nombre>, espero que se encuentre bien." when the
+   posting names the recruiter or contact; "Hola, espero que se encuentren bien." when it
+   does not (English: "Hello <name>, I hope you are doing well." / "Hello, I hope you are
+   doing well.");
 2. one line naming the role and the company;
 3. at most 2 sentences of positioning for THIS posting (seniority, years, domain);
 4. at most 2 bullet lines ("- "), each naming a requirement of the posting and the real
@@ -50,11 +53,11 @@ Body — the shape, in this order
 5. when the posting asks for something the profile does not show, ONE short sentence:
    name the closest tool or architecture the profile does have and say the experience
    transfers. Never claim the missing skill; never spend a paragraph on gaps;
-6. one concrete closing line ("Quedo disponible para coordinar una llamada cuando les
-   sirva."). Never a generic closer: no "Quedo atento a su respuesta", no "Quedo atento
-   a los próximos pasos", no "Saludos cordiales", no equivalents. Add availability only
-   if the posting asks about it.
-- SHORT: 80-130 words, never above 150.
+6. the closing line, exactly: "Quedo atento, saludos." (English: "I look forward to
+   hearing from you. Best regards," preceded by nothing else). Never "Quedo disponible
+   para coordinar una llamada cuando les sirva", never exclamation marks, no other
+   variant. Add availability only if the posting asks about it.
+- SHORT: 80-130 words, never above 150. The greeting and the closing count.
 
 Honesty — non-negotiable
 - Never invent metrics, percentages, headcounts, salaries, dates or employers: none are

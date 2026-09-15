@@ -8,7 +8,7 @@ Paste a job posting, press a key, get a ready-to-send application email **as a G
 - `draft_from_job.sh` persists the posting, then runs **one headless DeepSeek Harness session** (`dsh --profile recruiter`) with `src/prompt.md` + the structured profile + the posting, and requires a single JSON object: `{to, subject, body, lang, company, role}`.
   - The `recruiter` profile mounts the **memory MCP read-only**, so the model pulls the candidate's full professional profile from the vault before writing.
   - The draft is deliberately **short** (80–130 words, at most 2 bullets). When the posting asks for something the profile does not have, the model names the closest tool or architecture it does have and says the experience transfers — one sentence, never a paragraph.
-  - The prompt makes the model write **in the candidate's voice**: first person, short declarative sentences, no filler or buzzwords, no exclamation marks, no emoji, correct accents, neutral rioplatense register, and no generic closers ("Quedo atento a su respuesta", "Saludos cordiales").
+  - The prompt makes the model write **in the candidate's voice**: first person, short declarative sentences, no filler or buzzwords, no exclamation marks, no emoji, correct accents, formal *usted* register, a fixed opening (`Hola <nombre>, espero que se encuentre bien.`) and a fixed closing (`Quedo atento, saludos.`).
 - `gmail_draft.py` (python3 stdlib, no dependencies) builds the message:
   - `multipart/alternative` → `text/plain` body + `text/html` body with the HTML signature inlined;
   - the CV PDF as an attachment, renamed for the recruiter;
