@@ -1,7 +1,7 @@
 {
   "to": "jobs@acme.com",
   "subject": "Application - Platform Engineer - Acme",
-  "body": "Hi Acme team:\n\nI am applying for the Platform Engineer role.\n\n- Platform work: I build and operate data platforms on AWS with Terraform, CloudFormation and CI/CD.\n- Automation: I turn the repetitive part of the work into self-service tooling for the teams I support.\n\nMy production experience is on AWS, so the platform and automation side transfers directly to your stack.\n\nHappy to jump on a call whenever it suits you.",
+  "body": "Hello, I hope you are doing well.\n\nI am applying for the Platform Engineer role at Acme.\n\n- Platform work: I build and operate data platforms on AWS with Terraform, CloudFormation and CI/CD.\n- Automation: I turn the repetitive part of the work into self-service tooling for the teams I support.\n\nMy production experience is on AWS, so the platform and automation side transfers directly to your stack.\n\nI look forward to hearing from you. Best regards,",
   "lang": "en",
   "company": "Acme",
   "role": "Platform Engineer"
