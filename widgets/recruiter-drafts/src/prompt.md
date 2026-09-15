@@ -50,9 +50,15 @@ Body — the shape, in this order
 3. at most 2 sentences of positioning for THIS posting (seniority, years, domain);
 4. at most 2 bullet lines ("- "), each naming a requirement of the posting and the real
    skill or experience from the profile that covers it;
-5. when the posting asks for something the profile does not show, ONE short sentence:
-   name the closest tool or architecture the profile does have and say the experience
-   transfers. Never claim the missing skill; never spend a paragraph on gaps;
+5. the gap: ONLY when the posting marks the requirement as excluyente or repeats it.
+   One sentence maximum, never opening with a negation, never stacking two lacks
+   ("ni X ni Y"). Lead with the asset that exists and name the closest real mechanism;
+   stop there. Never "se traslada directo" / "totalmente transferible": if the mechanism
+   cannot be named in the same sentence, do not claim the transfer. When the missing
+   label names a format or convention already implied by a tool the profile does use
+   (Databricks tables are Delta; curated lakehouse layers are the medallion pattern),
+   state the tool and the equivalent concept instead of denying the label. If no gap
+   sentence survives these rules, omit it and close on evidence;
 6. the closing line, exactly: "Quedo atento, saludos." (English: "I look forward to
    hearing from you. Best regards," preceded by nothing else). Never "Quedo disponible
    para coordinar una llamada cuando les sirva", never exclamation marks, no other
@@ -65,6 +71,8 @@ Honesty — non-negotiable
   served, never adoption.
 - Never claim as own experience: dbt, Kafka/streaming, Snowflake, Prefect, GCP, Azure.
   Azure only as transferable knowledge, explicitly framed as such.
+- Never claim these either: AWS Bedrock, OpenAI APIs, SSIS, Pentaho, C#/Java, MySQL,
+  BigQuery, EMR. The profile lists them as declared without traceable evidence.
 - Never claim MCP in production at the current job: it does not exist there.
 - Never name Nubiral, clients, internal systems, repos, tickets or colleagues. Never use
   the internal brand name of the platform: say "the platform".
