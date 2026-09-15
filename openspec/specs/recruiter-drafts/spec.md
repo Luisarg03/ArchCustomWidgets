@@ -28,7 +28,7 @@ The unit MUST ship a standalone Quickshell window (`qs -p`, `src/capture.qml`) w
 
 ### Requirement: The email MUST be drafted by DeepSeek Harness from the candidate profile
 
-The unit MUST call a DeepSeek Harness headless profile (`dsh --profile <name> <payload>`, one fresh session per submission) with a prompt (`src/prompt.md`) that carries the candidate profile file and the job posting, and MUST require a single JSON object with keys `to`, `subject`, `body`, `lang`, `company`, `role`. The profile MUST run `deepseek-official / deepseek-flash` with `reasoningEffort: low` and MUST mount the memory MCP read-only, and the prompt MUST instruct the model to read the candidate's profile from that MCP before writing and never to write to memory. The prompt MUST also cap the draft at 80-130 words with at most two bullet lines, and MUST instruct the model to answer a requirement it cannot evidence with ONE short sentence naming the closest tool or architecture the profile does have. `DSH_ROOT`, the profile name, the profile path and the prompt path MUST be configurable through `env.conf`.
+The unit MUST call a DeepSeek Harness headless profile (`dsh --profile <name> <payload>`, one fresh session per submission) with a prompt (`src/prompt.md`) that carries the candidate profile file and the job posting, and MUST require a single JSON object with keys `to`, `subject`, `body`, `lang`, `company`, `role`. The profile MUST run `deepseek-official / deepseek-flash` with `reasoningEffort: low` and MUST mount the memory MCP read-only, and the prompt MUST instruct the model to read the candidate's profile from that MCP before writing and never to write to memory. The prompt MUST also cap the draft at 80-130 words with at most two bullet lines, and MUST instruct the model to answer a requirement it cannot evidence with ONE short sentence naming the closest tool or architecture the profile does have. The prompt MUST require the email to be written in the candidate's own voice: first person, short declarative sentences, no filler or buzzwords, no exclamation marks, no emoji, correct spelling and accents, a neutral rioplatense register (voseo only when the posting used it first), technical names kept in English, and no signature block. It MUST forbid generic closers ("Quedo atento a su respuesta", "Saludos cordiales") in favour of one concrete closing line, and MUST keep the honesty gate: no invented metrics, no experience the profile does not show, no employer-internal names or brands. The subject MUST follow `Postulación - <role> - <company>` in Spanish and `Application - <role> - <company>` in English. `DSH_ROOT`, the profile name, the profile path and the prompt path MUST be configurable through `env.conf`.
 
 #### Scenario: Valid LLM JSON
 
@@ -41,6 +41,12 @@ The unit MUST call a DeepSeek Harness headless profile (`dsh --profile <name> <p
 - Given a posting asking for a technology the profile does not list
 - When the draft is written
 - Then the body stays within the word budget, claims no missing skill, and names the closest transferable tool in one sentence
+
+#### Scenario: Voice of the candidate
+
+- Given any posting
+- When the draft is written
+- Then the body is first person, short and declarative, carries no filler, no exclamation marks and no emoji, writes the accents, and closes with a concrete line instead of a generic formula
 
 #### Scenario: Profile read from memory, never written
 
@@ -62,7 +68,7 @@ The unit MUST call a DeepSeek Harness headless profile (`dsh --profile <name> <p
 
 ### Requirement: The drafted message MUST be saved as a Gmail draft over IMAP
 
-The unit MUST build an RFC 5322 message with `From`, `To` (when a valid recipient is known), `Subject`, `Date`, a `text/plain` part, a `text/html` part carrying the HTML signature, and the CV PDF as an attachment, and MUST `APPEND` it to the account's Drafts mailbox over IMAPS (`imap.gmail.com:993`) using an app password. The drafts mailbox MUST be discovered through the `\Drafts` LIST attribute, with name fallbacks. The unit MUST NOT contain any SMTP or send path.
+The unit MUST build an RFC 5322 message with `From`, `To` (when a valid recipient is known), `Subject`, `Date`, a `text/plain` part, a `text/html` part carrying the HTML signature, a disclosure footer stating that an AI agent generated the message, and the CV PDF as an attachment taken from the canonical render, not a stale mirror. The footer MUST be produced by the message builder (never by the model), MUST follow the language of the email, and MUST close both MIME parts. The unit MUST `APPEND` the message to the account's Drafts mailbox over IMAPS (`imap.gmail.com:993`) using an app password. The drafts mailbox MUST be discovered through the `\Drafts` LIST attribute, with name fallbacks. The unit MUST NOT contain any SMTP or send path.
 
 #### Scenario: Draft appears in Gmail
 
@@ -81,6 +87,18 @@ The unit MUST build an RFC 5322 message with `From`, `To` (when a valid recipien
 - Given a posting with no usable email address and no override
 - When the draft is created
 - Then the draft is still created without `To` and the run reports that no recipient was detected
+
+#### Scenario: Disclosure footer
+
+- Given any drafted message
+- When the message is built
+- Then `text/plain` and `text/html` both end with the AI-disclosure notice, in the language of the email, and an unknown or missing `lang` yields the Spanish notice
+
+#### Scenario: Current CV attached
+
+- Given a CV path in `env.conf`
+- When the message is built
+- Then the attachment is the file at that path, renamed for the recruiter, and a missing file only warns
 
 #### Scenario: Degraded attachments
 
