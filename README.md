@@ -4,7 +4,7 @@
 
 <div align="center">
 
-![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white) ![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white) ![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white) ![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white) ![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white) ![8 units](https://img.shields.io/badge/8_units-0033A1?style=flat-square&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat-square&logo=archlinux&logoColor=white) ![Hyprland](https://img.shields.io/badge/Hyprland-44A3F5?style=flat-square&logo=hyprland&logoColor=white) ![Wayland](https://img.shields.io/badge/Wayland-5B3F8E?style=flat-square&logo=wayland&logoColor=white) ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=flat-square&logo=gnubash&logoColor=white) ![OpenSpec](https://img.shields.io/badge/OpenSpec-333333?style=flat-square&logo=markdown&logoColor=white) ![Caelestia](https://img.shields.io/badge/Caelestia-00BB31?style=flat-square&logoColor=white) ![9 units](https://img.shields.io/badge/9_units-0033A1?style=flat-square&logoColor=white) ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 </div>
 
@@ -82,6 +82,7 @@ flowchart TD
 | `waybar-theme` | widget | Theme switcher module for waybar | |
 | `clipboard-rofi` | widget | Rofi clipboard manager | Keybind `Super+V` — wire manually |
 | `task-notes` | widget | Quick note capture (`Ctrl+Super+G`) + batched LLM classification (title/type/priority/tags/due) + Caelestia Tasks tab | Needs `quickshell` + `opencode`; see `widgets/task-notes/README.md` |
+| `recruiter-drafts` | widget | Job-posting popup (`Super+H`) → LLM writes the application email from the CV profile → saved as a **Gmail draft** over IMAP, CV attached, HTML signature included | Needs `quickshell` + `opencode` + a Gmail app password (2FA); see `widgets/recruiter-drafts/README.md` |
 | `vpn-surfshark` | service | Surfshark VPN quick-toggle (Caelestia quick-toggles `utilities.vpn`), `surfshark-connect`/`surfshark-disconnect` units | System-level files → sudo install. Needs own `nftables.conf` + `/etc/wireguard/surfshark.conf` |
 | `quickshell-watchdog` | service | Watchdog for quickshell, systemd user unit + timer | |
 
@@ -101,6 +102,7 @@ flowchart TD
 | `waybar-theme` | `waybar` |
 | `clipboard-rofi` | `cliphist`, `wl-clipboard` (`wl-copy`), `rofi` |
 | `task-notes` | `quickshell`, `opencode` (for LLM classification) |
+| `recruiter-drafts` | `quickshell`, `opencode` (for the draft), `notify-send` (`libnotify`); Gmail app password + IMAP enabled |
 | `vpn-surfshark` | `wireguard-tools`, `nftables`, `jq`, `sudo`; user-provided `/etc/wireguard/surfshark.conf` + `src/nftables.conf` (never committed) |
 | `quickshell-watchdog` | `quickshell` |
 

@@ -1,0 +1,15 @@
+name: Smoke Test
+title: Cloud & Data Platform Engineer
+email: smoke@example.com
+location: Buenos Aires, Argentina
+skills:
+  cloud_iaac: [AWS, Terraform, S3, Lambda]
+  data_processing: [SQL, Python, Airflow, Databricks, Spark, ETL]
+experience:
+  - title: Data Engineer
+    company: Fixture Corp
+    dates: 01/2020 - Present
+    highlights:
+      - Built batch ETL pipelines with Airflow and Databricks.
+availability:
+  notice_period: Inmediata
