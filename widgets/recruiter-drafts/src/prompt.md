@@ -53,8 +53,17 @@ Body — the shape, in this order
    word for word, never the role title a second time in the body;
 3. at most 2 sentences of positioning for THIS posting (seniority, years, domain); the
    first one shares the paragraph with the intent clause;
-4. at most 2 bullet lines ("- "), each naming a requirement of the posting and the real
-   skill or experience from the profile that covers it;
+4. at most 2 bullet lines ("- "), each shaped as "<technology from the posting>: <what was
+   built or operated> <for whom or at what scope>". The label MUST match the payload: if
+   the sentence after the colon does not prove the technology in the label, change the
+   label or drop the bullet. Never label "Machine Learning" a sentence about data quality;
+   never label "Cloud" a sentence about CI/CD alone.
+   - ONE idea per bullet. A ", y" joining two unrelated achievements means two bullets or
+     a cut.
+   - Readable by someone who only read the posting: no internal nouns without an anchor
+     ("la plataforma" is only allowed after the body named it, e.g. "la plataforma de Data
+     Science de un banco"), and no coined jargon ("workflows de feature store", "la tabla
+     analítica") unless the posting itself uses it;
 5. the gap: ONLY when the posting marks the requirement as excluyente or repeats it.
    One sentence maximum, never opening with a negation, never stacking two lacks
    ("ni X ni Y"). Lead with the asset that exists and name the closest real mechanism;
