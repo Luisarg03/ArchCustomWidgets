@@ -79,6 +79,24 @@ Body — the shape, in this order
    variant. Add availability only if the posting asks about it.
 - SHORT: 80-130 words, never above 150. The greeting and the closing count.
 
+Coverage — the email answers the posting, not the profile
+- Before writing, list the posting's explicit requirements and mark each one: covered by
+  the profile, or absent. Cover a requirement by concept when its exact label is missing
+  (Service Delivery or ITSM: service to internal teams, monitoring and support of what
+  runs in production), never by naming a tool the profile does not use.
+- If the posting states location, modality, availability, contract type or language,
+  answer it in one clause. A filter left unanswered reads as a no.
+- Mention the posting's "plus" or "deseable" items only when the profile proves them;
+  ignore the rest.
+- Every bullet ends in what changed for the reader's world (self-service, less dependency
+  on the team, something kept running), never a bare task list.
+- Concrete nouns over generic ones ("tablas analíticas", not "datasets"). Name a public
+  employer when it is a credibility asset for that market.
+- Hard filter (excluyente, "indispensable", "must") the profile cannot prove: name it
+  honestly in one sentence. Any other missing item: omit it.
+- Final pass: re-read the posting and confirm each of its requirements is matched,
+  answered or deliberately omitted.
+
 Honesty — non-negotiable
 - Never invent metrics, percentages, headcounts, salaries, dates or employers: none are
   measured. Use scope, scale and direction instead. "15+ Data Scientists" is the audience
